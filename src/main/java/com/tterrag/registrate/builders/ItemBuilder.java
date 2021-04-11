@@ -227,8 +227,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      */
     @SafeVarargs
     public final ItemBuilder<T, P> tag(Identified<Item>... tags) {
-//        return tag(ProviderType.ITEM_TAGS, tags);
-    	return this;
+        return this/*tag(ProviderType.ITEM_TAGS, tags)*/;
     }
     
     @Override

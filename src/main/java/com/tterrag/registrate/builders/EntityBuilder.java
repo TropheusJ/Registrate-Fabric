@@ -251,8 +251,7 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
      */
     @SafeVarargs
     public final EntityBuilder<T, B, P> tag(Identified<EntityType<?>>... tags) {
-//        return tag(ProviderType.ENTITY_TAGS, tags);
-    	return this;
+        return this/*tag(ProviderType.ENTITY_TAGS, tags)*/;
     }
 
     @Override

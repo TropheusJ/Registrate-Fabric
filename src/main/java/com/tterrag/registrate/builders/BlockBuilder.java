@@ -331,9 +331,9 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * 
      * @return this {@link BlockBuilder}
      */
-//    public BlockBuilder<T, P> defaultBlockstate() {
-//        return blockstate((ctx, prov) -> prov.simpleBlock(ctx.getEntry()));
-//    }
+    public BlockBuilder<T, P> defaultBlockstate() {
+        return this/*blockstate((ctx, prov) -> prov.simpleBlock(ctx.getEntry()))*/;
+    }
 
     /**
      * Configure the blockstate/models for this block.
@@ -353,9 +353,9 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * 
      * @return this {@link BlockBuilder}
      */
-//    public BlockBuilder<T, P> defaultLang() {
-//        return lang(Block::getTranslationKey);
-//    }
+    public BlockBuilder<T, P> defaultLang() {
+        return lang(Block::getTranslationKey);
+    }
 
     /**
      * Set the translation for this block.
@@ -364,9 +364,9 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      *            A localized English name
      * @return this {@link BlockBuilder}
      */
-//    public BlockBuilder<T, P> lang(String name) {
-//        return lang(Block::getTranslationKey, name);
-//    }
+    public BlockBuilder<T, P> lang(String name) {
+        return lang(Block::getTranslationKey, name);
+    }
 
     /**
      * Assign the default loot table, as specified by {@link RegistrateBlockLootTables#addDrop(Block)}. This is the default, so it is generally not necessary to call, unless for
@@ -374,9 +374,9 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * 
      * @return this {@link BlockBuilder}
      */
-//    public BlockBuilder<T, P> defaultLoot() {
-//        return loot(RegistrateBlockLootTables::addDrop);
-//    }
+    public BlockBuilder<T, P> defaultLoot() {
+        return this/*loot(RegistrateBlockLootTables::addDrop)*/;
+    }
 
     /**
      * Configure the loot table for this block. This is different than most data gen callbacks as the callback does not accept a {@link DataGenContext}, but instead a
@@ -415,10 +415,10 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      *            The tags to assign
      * @return this {@link BlockBuilder}
      */
-//    @SafeVarargs
-//    public final BlockBuilder<T, P> tag(Identified<Block>... tags) {
-//        return tag(ProviderType.BLOCK_TAGS, tags);
-//    }
+    @SafeVarargs
+    public final BlockBuilder<T, P> tag(Identified<Block>... tags) {
+        return this/*tag(ProviderType.BLOCK_TAGS, tags)*/;
+    }
 
     @Override
     protected T createEntry() {
