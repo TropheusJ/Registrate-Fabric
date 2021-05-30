@@ -45,7 +45,7 @@ public class ContainerBuilder<T extends ScreenHandler, S extends Screen & Screen
     private final NonNullSupplier<ScreenFactory<T, S>> screenFactory;
 
     public ContainerBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, ContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, S>> screenFactory) {
-    	super(owner, parent, name, callback, ScreenHandlerType.class);
+        super(owner, parent, name, callback, ScreenHandlerType.class);
         this.factory = factory;
         this.forgeFactory = null;
         this.screenFactory = screenFactory;
@@ -64,11 +64,11 @@ public class ContainerBuilder<T extends ScreenHandler, S extends Screen & Screen
         ScreenHandlerType<T> ret;
         ScreenHandlerRegistryExtension.createOnly = true;
         if (this.factory == null) {
-	        ForgeContainerFactory<T> factory = this.forgeFactory;
-	        ret = ScreenHandlerRegistry.registerExtended(null, (windowId, inv, buf) -> factory.create(supplier.get(), windowId, inv, buf));
+            ForgeContainerFactory<T> factory = this.forgeFactory;
+            ret = ScreenHandlerRegistry.registerExtended(null, (windowId, inv, buf) -> factory.create(supplier.get(), windowId, inv, buf));
         } else {
-        	ContainerFactory<T> factory = this.factory;
-        	ret = ScreenHandlerRegistry.registerSimple(null, (syncId, inventory) -> factory.create(supplier.get(), syncId, inventory));
+            ContainerFactory<T> factory = this.factory;
+            ret = ScreenHandlerRegistry.registerSimple(null, (syncId, inventory) -> factory.create(supplier.get(), syncId, inventory));
         }
         ScreenHandlerRegistryExtension.createOnly = false;
         EnvExecutor.runWhenOn(EnvType.CLIENT, () -> () -> {

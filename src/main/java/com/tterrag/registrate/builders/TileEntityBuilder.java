@@ -113,14 +113,16 @@ public class TileEntityBuilder<T extends BlockEntity, P> extends AbstractBuilder
     }
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
-	protected void registerRenderer() {
+    protected void registerRenderer() {
 //        OneTimeEventReceiver.addModListener(FMLClientSetupEvent.class, $ -> {
 //            NonNullSupplier<Function<BlockEntityRenderDispatcher, BlockEntityRenderer<? super T>>> renderer = this.renderer;
 //            if (renderer != null) {
 //                ClientRegistry.bindTileEntityRenderer(getEntry(), renderer.get());
 //            }
 //        });
-    	BlockEntityRendererRegistry.INSTANCE.register((BlockEntityType) getEntry(), (Function) renderer.get());
+        onRegister(entry -> {
+            BlockEntityRendererRegistry.INSTANCE.register((BlockEntityType) entry, (Function) renderer.get());
+        });
     }
 
     @Override

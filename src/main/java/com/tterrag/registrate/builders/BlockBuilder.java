@@ -322,7 +322,9 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
 //                e.getBlockColors().registerColorProvider(colorHandler.get().get(), getEntry());
 //            }
 //        });
-    	ColorProviderRegistry.BLOCK.register(colorHandler.get().get(), getEntry());
+        onRegister(entry -> {
+            ColorProviderRegistry.BLOCK.register(colorHandler.get().get(), entry);
+        });
     }
 
     /**

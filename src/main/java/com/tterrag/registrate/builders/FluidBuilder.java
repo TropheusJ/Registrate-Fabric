@@ -342,8 +342,8 @@ public class FluidBuilder<T extends SimpleFlowableFluid, P> extends AbstractBuil
 
     // Fabric TODO
     @SuppressWarnings("unchecked")
-	public <B extends FluidBlock> BlockBuilder<B, FluidBuilder<T, P>> block1(NonNullBiFunction<? extends T, FabricBlockSettings, ? extends B> factory) {
-    	return block((supplier, settings) -> ((NonNullBiFunction<T, FabricBlockSettings, ? extends B>) factory).apply(supplier.get(), settings));
+    public <B extends FluidBlock> BlockBuilder<B, FluidBuilder<T, P>> block1(NonNullBiFunction<? extends T, FabricBlockSettings, ? extends B> factory) {
+        return block((supplier, settings) -> ((NonNullBiFunction<T, FabricBlockSettings, ? extends B>) factory).apply(supplier.get(), settings));
     }
 
     @Beta
@@ -494,7 +494,7 @@ public class FluidBuilder<T extends SimpleFlowableFluid, P> extends AbstractBuil
             throw new IllegalStateException("Fluid must have a source version: " + getName());
         }
         if (renderHandler == null) {
-        	this.setDefaultRenderHandler();
+            this.setDefaultRenderHandler();
         }
         onRegister(this::registerRenderHandler);
         return (FluidEntry<T>) super.register();

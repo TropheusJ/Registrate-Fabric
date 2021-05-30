@@ -160,7 +160,9 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
 //                e.getItemColors().register(colorHandler.get().get(), getEntry());
 //            }
 //        });
-    	ColorProviderRegistry.ITEM.register(colorHandler.get().get(), getEntry());
+        onRegister(entry -> {
+            ColorProviderRegistry.ITEM.register(colorHandler.get().get(), entry);
+        });
     }
     
     /**
@@ -169,8 +171,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      * @return this {@link ItemBuilder}
      */
     public ItemBuilder<T, P> defaultModel() {
-//        return model((ctx, prov) -> prov.generated(ctx::getEntry));
-    	return this;
+        return this/*model((ctx, prov) -> prov.generated(ctx::getEntry))*/;
     }
 
     /**

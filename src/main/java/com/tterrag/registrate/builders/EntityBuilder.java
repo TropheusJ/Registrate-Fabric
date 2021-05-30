@@ -95,8 +95,8 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
     private @Nullable ItemBuilder<LazySpawnEggItem<T>, EntityBuilder<T, B, P>> spawnEggBuilder;
     
     protected EntityBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, EntityType.EntityFactory<T> factory, SpawnGroup classification, NonNullBiFunction<SpawnGroup, EntityType.EntityFactory<T>, B> function) {
-    	super(owner, parent, name, callback, EntityType.class);
-    	this.builder = () -> function.apply(classification, factory);
+        super(owner, parent, name, callback, EntityType.class);
+        this.builder = () -> function.apply(classification, factory);
     }
 
     /**
@@ -132,11 +132,13 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
     }
     
     protected void registerRenderer() {
-    	try {
-    		EntityRendererRegistry.INSTANCE.register(getEntry(), renderer.get());
-    	} catch (Exception e) {
-    		throw new IllegalStateException("Failed to register renderer for Entity " + get().getId(), e);
-    	}
+        onRegister(entry -> {
+            try {
+                EntityRendererRegistry.INSTANCE.register(entry, renderer.get());
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to register renderer for Entity " + get().getId(), e);
+            }
+        });
     }
     
     /**
@@ -162,7 +164,7 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
         }
         spawnConfigured = true;
         if (builder.get() instanceof FabricEntityTypeBuilder.Mob) {
-        	((FabricEntityTypeBuilder.Mob) builder.get()).spawnRestriction(type, heightmap, predicate);
+            ((FabricEntityTypeBuilder.Mob) builder.get()).spawnRestriction(type, heightmap, predicate);
         }
         return this;
     }
