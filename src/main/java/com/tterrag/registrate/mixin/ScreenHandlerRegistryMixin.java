@@ -12,16 +12,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import com.tterrag.registrate.fabric.ScreenHandlerRegistryExtension;
 
-@Mixin(ScreenHandlerRegistry.class)
+@Mixin(value = ScreenHandlerRegistry.class)
 public class ScreenHandlerRegistryMixin {
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/util/registry/Registry;register(Lnet/minecraft/util/registry/Registry;Lnet/minecraft/util/Identifier;Ljava/lang/Object;)Ljava/lang/Object;"), method = "registerSimple", locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/core/Registry;register(Lnet/minecraft/core/Registry;Lnet/minecraft/resources/ResourceLocation;Ljava/lang/Object;)Ljava/lang/Object;"), method = "registerSimple", locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
 	private static void onRegisterSimple(ResourceLocation id, SimpleClientHandlerFactory<?> factory, CallbackInfoReturnable<MenuType<?>> cir, MenuType<?> type) {
 		if (ScreenHandlerRegistryExtension.createOnly) {
 			cir.setReturnValue(type);
 		}
 	}
 
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/util/registry/Registry;register(Lnet/minecraft/util/registry/Registry;Lnet/minecraft/util/Identifier;Ljava/lang/Object;)Ljava/lang/Object;"), method = "registerExtended", locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
+	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/core/Registry;register(Lnet/minecraft/core/Registry;Lnet/minecraft/resources/ResourceLocation;Ljava/lang/Object;)Ljava/lang/Object;"), method = "registerExtended", locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
 	private static void onRegisterExtended(ResourceLocation id, ExtendedClientHandlerFactory<?> factory, CallbackInfoReturnable<MenuType<?>> cir, MenuType<?> type) {
 		if (ScreenHandlerRegistryExtension.createOnly) {
 			cir.setReturnValue(type);

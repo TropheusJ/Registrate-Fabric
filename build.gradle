@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '0.8-SNAPSHOT'
+	id 'fabric-loom' version '0.9-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -31,8 +31,8 @@ dependencies {
 	// You may need to force-disable transitiveness on them.
 }
 
-minecraft {
-	accessWidener("src/main/resources/registrate.accessWidener")
+loom {
+	accessWidenerPath = file("src/main/resources/registrate.accesswidener")
 }
 
 processResources {
