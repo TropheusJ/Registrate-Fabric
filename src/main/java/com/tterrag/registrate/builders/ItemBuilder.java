@@ -5,13 +5,11 @@ import java.util.function.Supplier;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
+import net.minecraft.client.color.item.ItemColor;
+import net.minecraft.tags.Tag.Named;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.client.color.item.ItemColorProvider;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.tag.Tag.Identified;
-
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.fabric.EnvExecutor;
 import com.tterrag.registrate.fabric.RegistryObject;
@@ -67,7 +65,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      * <ul>
      * <li>A simple generated model with one texture (via {@link #defaultModel()})</li>
      * <li>The default translation (via {@link #defaultLang()})</li>
-     * <li>An {@link ItemGroup} set in the properties from the group supplier parameter, if non-null</li>
+     * <li>An {@link CreativeModeTab} set in the properties from the group supplier parameter, if non-null</li>
      * </ul>
      * 
      * @param <T>
@@ -85,10 +83,10 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      * @param factory
      *            Factory to create the item
      * @param group
-     *            The {@link ItemGroup} for the object, can be null for none
+     *            The {@link CreativeModeTab} for the object, can be null for none
      * @return A new {@link ItemBuilder} with reasonable default data generators.
      */
-    public static <T extends Item, P> ItemBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<FabricItemSettings, T> factory, @Nullable NonNullSupplier<? extends ItemGroup> group) {
+    public static <T extends Item, P> ItemBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<FabricItemSettings, T> factory, @Nullable NonNullSupplier<? extends CreativeModeTab> group) {
         return new ItemBuilder<>(owner, parent, name, callback, factory)
                 .defaultModel().defaultLang()
                 .transform(ib -> group == null ? ib : ib.group(group));
@@ -100,7 +98,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     private NonNullFunction<FabricItemSettings, FabricItemSettings> propertiesCallback = NonNullUnaryOperator.identity();
     
     @Nullable
-    private NonNullSupplier<Supplier<ItemColorProvider>> colorHandler;
+    private NonNullSupplier<Supplier<ItemColor>> colorHandler;
     
     protected ItemBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<FabricItemSettings, T> factory) {
         super(owner, parent, name, callback, Item.class);
@@ -134,18 +132,18 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
         return this;
     }
 
-    public ItemBuilder<T, P> group(NonNullSupplier<? extends ItemGroup> group) {
-        return properties(p -> p.group(group.get()));
+    public ItemBuilder<T, P> group(NonNullSupplier<? extends CreativeModeTab> group) {
+        return properties(p -> (FabricItemSettings) p.tab(group.get()));
     }
     
     /**
-     * Register a block color handler for this item. The {@link ItemColorProvider} instance can be shared across many items.
+     * Register a block color handler for this item. The {@link ItemColor} instance can be shared across many items.
      * 
      * @param colorHandler
      *            The color handler to register for this item
      * @return this {@link ItemBuilder}
      */
-    public ItemBuilder<T, P> color(NonNullSupplier<Supplier<ItemColorProvider>> colorHandler) {
+    public ItemBuilder<T, P> color(NonNullSupplier<Supplier<ItemColor>> colorHandler) {
         if (this.colorHandler == null) {
             EnvExecutor.runWhenOn(EnvType.CLIENT, () -> this::registerItemColor);
         }
@@ -193,7 +191,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      * @return this {@link ItemBuilder}
      */
     public ItemBuilder<T, P> defaultLang() {
-        return lang(Item::getTranslationKey);
+        return lang(Item::getDescriptionId);
     }
     
     /**
@@ -204,7 +202,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      * @return this {@link ItemBuilder}
      */
     public ItemBuilder<T, P> lang(String name) {
-        return lang(Item::getTranslationKey, name);
+        return lang(Item::getDescriptionId, name);
     }
 
     /**
@@ -220,14 +218,14 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
 //    }
     
     /**
-     * Assign {@link Identified}{@code s} to this item. Multiple calls will add additional tags.
+     * Assign {@link Named}{@code s} to this item. Multiple calls will add additional tags.
      * 
      * @param tags
      *            The tag to assign
      * @return this {@link ItemBuilder}
      */
     @SafeVarargs
-    public final ItemBuilder<T, P> tag(Identified<Item>... tags) {
+    public final ItemBuilder<T, P> tag(Named<Item>... tags) {
         return this/*tag(ProviderType.ITEM_TAGS, tags)*/;
     }
     

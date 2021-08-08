@@ -10,21 +10,19 @@ import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
+import net.minecraft.world.level.material.MaterialColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.Material;
-import net.minecraft.block.MaterialColor;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.client.color.block.BlockColorProvider;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.item.BlockItem;
-import net.minecraft.tag.Tag.Identified;
-import net.minecraft.util.DyeColor;
-
+import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.tags.Tag.Named;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.Material;
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.fabric.EnvExecutor;
 import com.tterrag.registrate.fabric.RegistryObject;
@@ -83,10 +81,10 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
     
     private NonNullSupplier<FabricBlockSettings> initialProperties;
     private NonNullFunction<FabricBlockSettings, FabricBlockSettings> propertiesCallback = NonNullUnaryOperator.identity();
-    private List<Supplier<Supplier<RenderLayer>>> renderLayers = new ArrayList<>(1);
+    private List<Supplier<Supplier<RenderType>>> renderLayers = new ArrayList<>(1);
     
     @Nullable
-    private NonNullSupplier<Supplier<BlockColorProvider>> colorHandler;
+    private NonNullSupplier<Supplier<BlockColor>> colorHandler;
 
     protected BlockBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<FabricBlockSettings, T> factory, NonNullSupplier<FabricBlockSettings> initialProperties) {
         super(owner, parent, name, callback, Block.class);
@@ -153,7 +151,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * Replace the initial state of the block properties, without replacing or removing any modifications done via {@link #properties(NonNullUnaryOperator)}.
      * 
      * @param block
-     *            The block to create the initial properties from (via {@link FabricBlockSettings#copy(AbstractBlock)})
+     *            The block to create the initial properties from (via {@link FabricBlockSettings#copy(BlockBehaviour)})
      * @return this {@link BlockBuilder}
      */
     public BlockBuilder<T, P> initialProperties(NonNullSupplier<? extends Block> block) {
@@ -161,9 +159,9 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
         return this;
     }
 
-    public BlockBuilder<T, P> addLayer(Supplier<Supplier<RenderLayer>> layer) {
+    public BlockBuilder<T, P> addLayer(Supplier<Supplier<RenderType>> layer) {
         EnvExecutor.runWhenOn(EnvType.CLIENT, () -> () -> {
-            Preconditions.checkArgument(RenderLayer.getBlockLayers().contains(layer.get().get()), "Invalid block layer: " + layer);
+            Preconditions.checkArgument(RenderType.chunkBufferLayers().contains(layer.get().get()), "Invalid block layer: " + layer);
         });
         if (this.renderLayers.isEmpty()) {
             onRegister(this::registerLayers);
@@ -175,7 +173,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
     protected void registerLayers(T entry) {
         EnvExecutor.runWhenOn(EnvType.CLIENT, () -> () -> {
 //            if (renderLayers.size() == 1) {
-                final RenderLayer layer = renderLayers.get(0).get().get();
+                final RenderType layer = renderLayers.get(0).get().get();
                 BlockRenderLayerMap.INSTANCE.putBlock(entry, layer);
 //            } else if (renderLayers.size() > 1) {
 //                final Set<RenderLayer> layers = renderLayers.stream()
@@ -300,14 +298,14 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
     }
     
     /**
-     * Register a block color handler for this block. The {@link BlockColorProvider} instance can be shared across many blocks.
+     * Register a block color handler for this block. The {@link BlockColor} instance can be shared across many blocks.
      * 
      * @param colorHandler
      *            The color handler to register for this block
      * @return this {@link BlockBuilder}
      */
     // TODO it might be worthwhile to abstract this more and add the capability to automatically copy to the item
-    public BlockBuilder<T, P> color(NonNullSupplier<Supplier<BlockColorProvider>> colorHandler) {
+    public BlockBuilder<T, P> color(NonNullSupplier<Supplier<BlockColor>> colorHandler) {
         if (this.colorHandler == null) {
             EnvExecutor.runWhenOn(EnvType.CLIENT, () -> this::registerBlockColor);
         }
@@ -356,7 +354,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * @return this {@link BlockBuilder}
      */
     public BlockBuilder<T, P> defaultLang() {
-        return lang(Block::getTranslationKey);
+        return lang(Block::getDescriptionId);
     }
 
     /**
@@ -367,7 +365,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * @return this {@link BlockBuilder}
      */
     public BlockBuilder<T, P> lang(String name) {
-        return lang(Block::getTranslationKey, name);
+        return lang(Block::getDescriptionId, name);
     }
 
     /**
@@ -411,14 +409,14 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
 //    }
 
     /**
-     * Assign {@link Identified}{@code s} to this block. Multiple calls will add additional tags.
+     * Assign {@link Named}{@code s} to this block. Multiple calls will add additional tags.
      * 
      * @param tags
      *            The tags to assign
      * @return this {@link BlockBuilder}
      */
     @SafeVarargs
-    public final BlockBuilder<T, P> tag(Identified<Block>... tags) {
+    public final BlockBuilder<T, P> tag(Named<Block>... tags) {
         return this/*tag(ProviderType.BLOCK_TAGS, tags)*/;
     }
 

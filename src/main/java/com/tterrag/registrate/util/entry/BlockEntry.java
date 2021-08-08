@@ -1,10 +1,9 @@
 package com.tterrag.registrate.util.entry;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.fabric.RegistryObject;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class BlockEntry<T extends Block> extends ItemProviderEntry<T> {
 
@@ -13,7 +12,7 @@ public class BlockEntry<T extends Block> extends ItemProviderEntry<T> {
     }
 
     public BlockState getDefaultState() {
-        return get().getDefaultState();
+        return get().defaultBlockState();
     }
 
     public boolean has(BlockState state) {

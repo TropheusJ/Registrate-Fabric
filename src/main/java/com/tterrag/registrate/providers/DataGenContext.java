@@ -1,10 +1,9 @@
 package com.tterrag.registrate.providers;
 
-import net.minecraft.util.Identifier;
-
 import com.tterrag.registrate.builders.Builder;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
 import com.tterrag.registrate.util.nullness.NonnullType;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * A context bean passed to data generator callbacks. Contains the entry that data is being created for, and some metadata about the entry.
@@ -17,7 +16,7 @@ import com.tterrag.registrate.util.nullness.NonnullType;
 public final class DataGenContext<R, E extends R> implements NonNullSupplier<E> {
     private final NonNullSupplier<E> entry;
     private final String name;
-    private final Identifier id;
+    private final ResourceLocation id;
 
     @SuppressWarnings("null")
     @NonnullType
@@ -26,11 +25,11 @@ public final class DataGenContext<R, E extends R> implements NonNullSupplier<E> 
     }
 
     public static <R, E extends R> DataGenContext<R, E> from(Builder<R, E, ?, ?> builder, Class<? super R> clazz) {
-        return new DataGenContext<R, E>(NonNullSupplier.of(builder.getOwner().<R, E>get(builder.getName(), clazz)), builder.getName(), new Identifier(builder.getOwner().getModid(), builder.getName()));
+        return new DataGenContext<R, E>(NonNullSupplier.of(builder.getOwner().<R, E>get(builder.getName(), clazz)), builder.getName(), new ResourceLocation(builder.getOwner().getModid(), builder.getName()));
     }
 
     @javax.annotation.Generated("lombok")
-    public DataGenContext(final NonNullSupplier<E> entry, final String name, final Identifier id) {
+    public DataGenContext(final NonNullSupplier<E> entry, final String name, final ResourceLocation id) {
         this.entry = entry;
         this.name = name;
         this.id = id;
@@ -42,7 +41,7 @@ public final class DataGenContext<R, E extends R> implements NonNullSupplier<E> 
     }
 
     @javax.annotation.Generated("lombok")
-    public Identifier getId() {
+    public ResourceLocation getId() {
         return this.id;
     }
 

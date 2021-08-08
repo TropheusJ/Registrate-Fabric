@@ -1,33 +1,31 @@
 package com.tterrag.registrate.fabric;
 
 import java.util.function.Supplier;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.material.FlowingFluid;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.FluidBlock;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.fluid.FlowableFluid;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.state.StateManager;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.WorldAccess;
-import net.minecraft.world.WorldView;
-
-public abstract class SimpleFlowableFluid extends FlowableFluid {
+public abstract class SimpleFlowableFluid extends FlowingFluid {
 	private final Supplier<? extends Fluid> flowing;
 	private final Supplier<? extends Fluid> still;
 	@Nullable
 	private final Supplier<? extends Item> bucket;
 	@Nullable
-	private final Supplier<? extends FluidBlock> block;
+	private final Supplier<? extends LiquidBlock> block;
 	private final boolean infinite;
 	private final int flowSpeed;
 	private final int levelDecreasePerBlock;
@@ -52,83 +50,83 @@ public abstract class SimpleFlowableFluid extends FlowableFluid {
 	}
 
 	@Override
-	public Fluid getStill() {
+	public Fluid getSource() {
 		return still.get();
 	}
 
 	@Override
-	protected boolean isInfinite() {
+	protected boolean canConvertToSource() {
 		return infinite;
 	}
 
 	@Override
-	protected void beforeBreakingBlock(WorldAccess world, BlockPos pos, BlockState state) {
-		BlockEntity blockEntity = state.getBlock().hasBlockEntity() ? world.getBlockEntity(pos) : null;
-		Block.dropStacks(state, world, pos, blockEntity);
+	protected void beforeDestroyingBlock(LevelAccessor world, BlockPos pos, BlockState state) {
+		BlockEntity blockEntity = state.hasBlockEntity() ? world.getBlockEntity(pos) : null;
+		Block.dropResources(state, world, pos, blockEntity);
 	}
 
 	@Override
-	protected int getFlowSpeed(WorldView world) {
+	protected int getSlopeFindDistance(LevelReader world) {
 		return flowSpeed;
 	}
 
 	@Override
-	protected int getLevelDecreasePerBlock(WorldView worldIn) {
+	protected int getDropOff(LevelReader worldIn) {
 		return levelDecreasePerBlock;
 	}
 
 	@Override
-	public Item getBucketItem() {
+	public Item getBucket() {
 		return bucket != null ? bucket.get() : Items.AIR;
 	}
 
 	@Override
-	protected boolean canBeReplacedWith(FluidState state, BlockView world, BlockPos pos, Fluid fluid, Direction direction) {
-		return direction == Direction.DOWN && !matchesType(fluid);
+	protected boolean canBeReplacedWith(FluidState state, BlockGetter world, BlockPos pos, Fluid fluid, Direction direction) {
+		return direction == Direction.DOWN && !isSame(fluid);
 	}
 
 	@Override
-	public int getTickRate(WorldView world) {
+	public int getTickDelay(LevelReader world) {
 		return tickRate;
 	}
 
 	@Override
-	protected float getBlastResistance() {
+	protected float getExplosionResistance() {
 		return blastResistance;
 	}
 
 	@Override
-	protected BlockState toBlockState(FluidState state) {
+	protected BlockState createLegacyBlock(FluidState state) {
 		if (block != null) {
-			return block.get().getDefaultState().with(FluidBlock.LEVEL, method_15741(state));
+			return block.get().defaultBlockState().setValue(LiquidBlock.LEVEL, getLegacyLevel(state));
 		}
-		return Blocks.AIR.getDefaultState();
+		return Blocks.AIR.defaultBlockState();
 	}
 
 	@Override
-	public boolean matchesType(Fluid fluid) {
+	public boolean isSame(Fluid fluid) {
 		return fluid == still.get() || fluid == flowing.get();
 	}
 
 	public static class Flowing extends SimpleFlowableFluid {
 		public Flowing(Properties properties) {
 			super(properties);
-			setDefaultState(getStateManager().getDefaultState().with(LEVEL, 7));
+			registerDefaultState(getStateDefinition().any().setValue(LEVEL, 7));
 		}
 
 		@Override
-		protected void appendProperties(StateManager.Builder<Fluid, FluidState> builder) {
-			super.appendProperties(builder);
+		protected void createFluidStateDefinition(StateDefinition.Builder<Fluid, FluidState> builder) {
+			super.createFluidStateDefinition(builder);
 			builder.add(LEVEL);
 		}
 
 		@Override
-		public int getLevel(FluidState state) {
-			return state.get(LEVEL);
+		public int getAmount(FluidState state) {
+			return state.getValue(LEVEL);
 		}
 
 		@Override
-		public boolean isStill(FluidState state) {
+		public boolean isSource(FluidState state) {
 			return false;
 		}
 	}
@@ -139,12 +137,12 @@ public abstract class SimpleFlowableFluid extends FlowableFluid {
 		}
 
 		@Override
-		public int getLevel(FluidState state) {
+		public int getAmount(FluidState state) {
 			return 8;
 		}
 
 		@Override
-		public boolean isStill(FluidState state) {
+		public boolean isSource(FluidState state) {
 			return true;
 		}
 	}
@@ -154,7 +152,7 @@ public abstract class SimpleFlowableFluid extends FlowableFluid {
 		private Supplier<? extends Fluid> flowing;
 		private boolean infinite;
 		private Supplier<? extends Item> bucket;
-		private Supplier<? extends FluidBlock> block;
+		private Supplier<? extends LiquidBlock> block;
 		private int flowSpeed = 4;
 		private int levelDecreasePerBlock = 1;
 		private float blastResistance = 1;
@@ -175,7 +173,7 @@ public abstract class SimpleFlowableFluid extends FlowableFluid {
 			return this;
 		}
 
-		public Properties block(Supplier<? extends FluidBlock> block) {
+		public Properties block(Supplier<? extends LiquidBlock> block) {
 			this.block = block;
 			return this;
 		}

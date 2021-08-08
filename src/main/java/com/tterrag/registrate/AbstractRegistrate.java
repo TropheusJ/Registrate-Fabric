@@ -22,31 +22,29 @@ import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.Util;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.MenuAccess;
+import net.minecraft.core.Registry;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentCategory;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.material.Material;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.Material;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.ScreenHandlerProvider;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentTarget;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.text.TranslatableText;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
-import net.minecraft.util.registry.Registry;
-
 import com.tterrag.registrate.builders.BlockBuilder;
 import com.tterrag.registrate.builders.Builder;
 import com.tterrag.registrate.builders.BuilderCallback;
@@ -102,13 +100,13 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
     private static final org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager.getLogger(AbstractRegistrate.class);
 
     private final class Registration<R, T extends R> {
-        private final Identifier name;
+        private final ResourceLocation name;
         private final Class<? super R> type;
         private final NonNullLazyValue<? extends T> creator;
         private final RegistryEntry<T> delegate;
         private final List<NonNullConsumer<? super T>> callbacks = new ArrayList<>();
 
-        Registration(Identifier name, Class<? super R> type, NonNullSupplier<? extends T> creator, NonNullFunction<RegistryObject<T>, ? extends RegistryEntry<T>> entryFactory) {
+        Registration(ResourceLocation name, Class<? super R> type, NonNullSupplier<? extends T> creator, NonNullFunction<RegistryObject<T>, ? extends RegistryEntry<T>> entryFactory) {
             this.name = name;
             this.type = type;
             this.creator = new NonNullLazyValue<>(creator);
@@ -129,7 +127,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
         }
 
         @javax.annotation.Generated("lombok")
-        public Identifier getName() {
+        public ResourceLocation getName() {
             return this.name;
         }
 
@@ -220,7 +218,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
     @Nullable
     private String currentName;
     @Nullable
-    private NonNullLazyValue<? extends ItemGroup> currentGroup;
+    private NonNullLazyValue<? extends CreativeModeTab> currentGroup;
     private boolean skipErrors;
 
     /**
@@ -287,7 +285,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
     @SuppressWarnings({"rawtypes", "unchecked"})
     protected void onRegister(Registry<?> registry) {
         Class<?> type = RegistryUtil.getRegistrationClass(registry);
-        Identifier registryId = RegistryUtil.getId(registry);
+        ResourceLocation registryId = RegistryUtil.getId(registry);
         if (type == null) {
             log.debug(DebugMarkers.REGISTER, "Skipping invalid registry with no supertype: " + registryId);
             return;
@@ -560,13 +558,13 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
      *            The translation key
      * @param value
      *            The (English) translation value
-     * @return A {@link TranslatableText} representing the translated text
+     * @return A {@link TranslatableComponent} representing the translated text
      */
     @Deprecated
-    public TranslatableText addLang(String key, String value) {
+    public TranslatableComponent addLang(String key, String value) {
         final String prefixedKey = getModid() + "." + key;
 //        addDataGenerator(ProviderType.LANG, p -> p.add(prefixedKey, value));
-        return new TranslatableText(prefixedKey);
+        return new TranslatableComponent(prefixedKey);
     }
 
     /**
@@ -575,13 +573,13 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
      * @param type
      *            Type of the object, this is used as a prefix (e.g. {@code ["block", "mymod:myblock"] -> "block.mymod.myblock"})
      * @param id
-     *            ID of the object, which will be converted to a lang key via {@link Util#createTranslationKey(String, Identifier)}
+     *            ID of the object, which will be converted to a lang key via {@link Util#makeDescriptionId(String, ResourceLocation)}
      * @param localizedName
      *            (English) translation value
-     * @return A {@link TranslatableText} representing the translated text
+     * @return A {@link TranslatableComponent} representing the translated text
      */
-    public TranslatableText addLang(String type, Identifier id, String localizedName) {
-        return addRawLang(Util.createTranslationKey(type, id), localizedName);
+    public TranslatableComponent addLang(String type, ResourceLocation id, String localizedName) {
+        return addRawLang(Util.makeDescriptionId(type, id), localizedName);
     }
 
     /**
@@ -590,15 +588,15 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
      * @param type
      *            Type of the object, this is used as a prefix (e.g. {@code ["block", "mymod:myblock"] -> "block.mymod.myblock"})
      * @param id
-     *            ID of the object, which will be converted to a lang key via {@link Util#createTranslationKey(String, Identifier)}
+     *            ID of the object, which will be converted to a lang key via {@link Util#makeDescriptionId(String, ResourceLocation)}
      * @param suffix
      *            A suffix which will be appended to the generated key (separated by a dot)
      * @param localizedName
      *            (English) translation value
-     * @return A {@link TranslatableText} representing the translated text
+     * @return A {@link TranslatableComponent} representing the translated text
      */
-    public TranslatableText addLang(String type, Identifier id, String suffix, String localizedName) {
-        return addRawLang(Util.createTranslationKey(type, id) + "." + suffix, localizedName);
+    public TranslatableComponent addLang(String type, ResourceLocation id, String suffix, String localizedName) {
+        return addRawLang(Util.makeDescriptionId(type, id) + "." + suffix, localizedName);
     }
 
     /**
@@ -608,13 +606,13 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
      *            The translation key
      * @param value
      *            The (English) translation value
-     * @return A {@link TranslatableText} representing the translated text
+     * @return A {@link TranslatableComponent} representing the translated text
      */
-    public TranslatableText addRawLang(String key, String value) {
+    public TranslatableComponent addRawLang(String key, String value) {
 //        if (doDatagen.get()) {
 //            extraLang.get().add(Pair.of(key, value));
 //        }
-        return new TranslatableText(key);
+        return new TranslatableComponent(key);
     }
 
 //    @SuppressWarnings("null")
@@ -710,7 +708,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
      *            The group to use for future items
      * @return this {@link AbstractRegistrate}
      */
-    public S itemGroup(NonNullSupplier<? extends ItemGroup> group) {
+    public S itemGroup(NonNullSupplier<? extends CreativeModeTab> group) {
         this.currentGroup = new NonNullLazyValue<>(group);
         return self();
     }
@@ -727,7 +725,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
      *            The english name to use for the item group title
      * @return this {@link AbstractRegistrate}
      */
-    public S itemGroup(NonNullSupplier<? extends ItemGroup> group, String localizedName) {
+    public S itemGroup(NonNullSupplier<? extends CreativeModeTab> group, String localizedName) {
 //        this.addDataGenerator(ProviderType.LANG, prov -> prov.add(group.get(), localizedName));
         return itemGroup(group);
     }
@@ -823,7 +821,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
     }
 
     protected <R, T extends R> RegistryEntry<T> accept(String name, Class<? super R> type, Builder<R, T, ?, ?> builder, NonNullSupplier<? extends T> creator, NonNullFunction<RegistryObject<T>, ? extends RegistryEntry<T>> entryFactory) {
-        Registration<R, T> reg = new Registration<>(new Identifier(modid, name), type, creator, entryFactory);
+        Registration<R, T> reg = new Registration<>(new ResourceLocation(modid, name), type, creator, entryFactory);
         log.debug(DebugMarkers.REGISTER, "Captured registration for entry {} of type {}", name, type.getName());
         registerCallbacks.removeAll(Pair.of(name, type)).forEach(callback -> {
             @SuppressWarnings({"unchecked", "null"})
@@ -912,53 +910,53 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
 
     // Entities
     // Regular
-    public <T extends Entity> EntityBuilder<T, FabricEntityTypeBuilder<T>, S> entity(EntityType.EntityFactory<T> factory, SpawnGroup classification) {
+    public <T extends Entity> EntityBuilder<T, FabricEntityTypeBuilder<T>, S> entity(EntityType.EntityFactory<T> factory, MobCategory classification) {
         return entity(self(), factory, classification);
     }
 
-    public <T extends Entity> EntityBuilder<T, FabricEntityTypeBuilder<T>, S> entity(String name, EntityType.EntityFactory<T> factory, SpawnGroup classification) {
+    public <T extends Entity> EntityBuilder<T, FabricEntityTypeBuilder<T>, S> entity(String name, EntityType.EntityFactory<T> factory, MobCategory classification) {
         return entity(self(), name, factory, classification);
     }
 
-    public <T extends Entity, P> EntityBuilder<T, FabricEntityTypeBuilder<T>, P> entity(P parent, EntityType.EntityFactory<T> factory, SpawnGroup classification) {
+    public <T extends Entity, P> EntityBuilder<T, FabricEntityTypeBuilder<T>, P> entity(P parent, EntityType.EntityFactory<T> factory, MobCategory classification) {
         return entity(parent, currentName(), factory, classification);
     }
 
-    public <T extends Entity, P> EntityBuilder<T, FabricEntityTypeBuilder<T>, P> entity(P parent, String name, EntityType.EntityFactory<T> factory, SpawnGroup classification) {
+    public <T extends Entity, P> EntityBuilder<T, FabricEntityTypeBuilder<T>, P> entity(P parent, String name, EntityType.EntityFactory<T> factory, MobCategory classification) {
         return entry(name, callback -> EntityBuilder.create(this, parent, name, callback, factory, classification));
     }
 
     // Living
-    public <T extends LivingEntity> EntityBuilder<T, FabricEntityTypeBuilder.Living<T>, S> entityLiving(EntityType.EntityFactory<T> factory, SpawnGroup classification) {
+    public <T extends LivingEntity> EntityBuilder<T, FabricEntityTypeBuilder.Living<T>, S> entityLiving(EntityType.EntityFactory<T> factory, MobCategory classification) {
         return entityLiving(self(), factory, classification);
     }
 
-    public <T extends LivingEntity> EntityBuilder<T, FabricEntityTypeBuilder.Living<T>, S> entityLiving(String name, EntityType.EntityFactory<T> factory, SpawnGroup classification) {
+    public <T extends LivingEntity> EntityBuilder<T, FabricEntityTypeBuilder.Living<T>, S> entityLiving(String name, EntityType.EntityFactory<T> factory, MobCategory classification) {
         return entityLiving(self(), name, factory, classification);
     }
 
-    public <T extends LivingEntity, P> EntityBuilder<T, FabricEntityTypeBuilder.Living<T>, P> entityLiving(P parent, EntityType.EntityFactory<T> factory, SpawnGroup classification) {
+    public <T extends LivingEntity, P> EntityBuilder<T, FabricEntityTypeBuilder.Living<T>, P> entityLiving(P parent, EntityType.EntityFactory<T> factory, MobCategory classification) {
         return entityLiving(parent, currentName(), factory, classification);
     }
 
-    public <T extends LivingEntity, P> EntityBuilder<T, FabricEntityTypeBuilder.Living<T>, P> entityLiving(P parent, String name, EntityType.EntityFactory<T> factory, SpawnGroup classification) {
+    public <T extends LivingEntity, P> EntityBuilder<T, FabricEntityTypeBuilder.Living<T>, P> entityLiving(P parent, String name, EntityType.EntityFactory<T> factory, MobCategory classification) {
         return entry(name, callback -> EntityBuilder.createLiving(this, parent, name, callback, factory, classification));
     }
 
     // Mob
-    public <T extends MobEntity> EntityBuilder<T, FabricEntityTypeBuilder.Mob<T>, S> entityMob(EntityType.EntityFactory<T> factory, SpawnGroup classification) {
+    public <T extends Mob> EntityBuilder<T, FabricEntityTypeBuilder.Mob<T>, S> entityMob(EntityType.EntityFactory<T> factory, MobCategory classification) {
         return entityMob(self(), factory, classification);
     }
 
-    public <T extends MobEntity> EntityBuilder<T, FabricEntityTypeBuilder.Mob<T>, S> entityMob(String name, EntityType.EntityFactory<T> factory, SpawnGroup classification) {
+    public <T extends Mob> EntityBuilder<T, FabricEntityTypeBuilder.Mob<T>, S> entityMob(String name, EntityType.EntityFactory<T> factory, MobCategory classification) {
         return entityMob(self(), name, factory, classification);
     }
 
-    public <T extends MobEntity, P> EntityBuilder<T, FabricEntityTypeBuilder.Mob<T>, P> entityMob(P parent, EntityType.EntityFactory<T> factory, SpawnGroup classification) {
+    public <T extends Mob, P> EntityBuilder<T, FabricEntityTypeBuilder.Mob<T>, P> entityMob(P parent, EntityType.EntityFactory<T> factory, MobCategory classification) {
         return entityMob(parent, currentName(), factory, classification);
     }
 
-    public <T extends MobEntity, P> EntityBuilder<T, FabricEntityTypeBuilder.Mob<T>, P> entityMob(P parent, String name, EntityType.EntityFactory<T> factory, SpawnGroup classification) {
+    public <T extends Mob, P> EntityBuilder<T, FabricEntityTypeBuilder.Mob<T>, P> entityMob(P parent, String name, EntityType.EntityFactory<T> factory, MobCategory classification) {
         return entry(name, callback -> EntityBuilder.createMob(this, parent, name, callback, factory, classification));
     }
 
@@ -1004,7 +1002,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
         return fluid(self());
     }
 
-    public FluidBuilder<SimpleFlowableFluid.Flowing, S> fluid(Identifier stillTexture, Identifier flowingTexture) {
+    public FluidBuilder<SimpleFlowableFluid.Flowing, S> fluid(ResourceLocation stillTexture, ResourceLocation flowingTexture) {
         return fluid(self(), stillTexture, flowingTexture);
     }
 
@@ -1012,7 +1010,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
 //        return fluid(self(), stillTexture, flowingTexture, attributesFactory);
 //    }
 
-    public <T extends SimpleFlowableFluid> FluidBuilder<T, S> fluid(Identifier stillTexture, Identifier flowingTexture, NonNullFunction<SimpleFlowableFluid.Properties, T> factory) {
+    public <T extends SimpleFlowableFluid> FluidBuilder<T, S> fluid(ResourceLocation stillTexture, ResourceLocation flowingTexture, NonNullFunction<SimpleFlowableFluid.Properties, T> factory) {
         return fluid(self(), stillTexture, flowingTexture, factory);
     }
 
@@ -1024,7 +1022,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
         return fluid(self(), name);
     }
 
-    public FluidBuilder<SimpleFlowableFluid.Flowing, S> fluid(String name, Identifier stillTexture, Identifier flowingTexture) {
+    public FluidBuilder<SimpleFlowableFluid.Flowing, S> fluid(String name, ResourceLocation stillTexture, ResourceLocation flowingTexture) {
         return fluid(self(), name, stillTexture, flowingTexture);
     }
 
@@ -1032,7 +1030,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
 //        return fluid(self(), name, stillTexture, flowingTexture, attributesFactory);
 //    }
 
-    public <T extends SimpleFlowableFluid> FluidBuilder<T, S> fluid(String name, Identifier stillTexture, Identifier flowingTexture, NonNullFunction<SimpleFlowableFluid.Properties, T> factory) {
+    public <T extends SimpleFlowableFluid> FluidBuilder<T, S> fluid(String name, ResourceLocation stillTexture, ResourceLocation flowingTexture, NonNullFunction<SimpleFlowableFluid.Properties, T> factory) {
         return fluid(self(), name, stillTexture, flowingTexture, factory);
     }
 
@@ -1044,7 +1042,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
         return fluid(parent, currentName());
     }
 
-    public <P> FluidBuilder<SimpleFlowableFluid.Flowing, P> fluid(P parent, Identifier stillTexture, Identifier flowingTexture) {
+    public <P> FluidBuilder<SimpleFlowableFluid.Flowing, P> fluid(P parent, ResourceLocation stillTexture, ResourceLocation flowingTexture) {
         return fluid(parent, currentName(), stillTexture, flowingTexture);
     }
 
@@ -1052,7 +1050,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
 //        return fluid(parent, currentName(), stillTexture, flowingTexture, attributesFactory);
 //    }
 
-    public <T extends SimpleFlowableFluid, P> FluidBuilder<T, P> fluid(P parent, Identifier stillTexture, Identifier flowingTexture, NonNullFunction<SimpleFlowableFluid.Properties, T> factory) {
+    public <T extends SimpleFlowableFluid, P> FluidBuilder<T, P> fluid(P parent, ResourceLocation stillTexture, ResourceLocation flowingTexture, NonNullFunction<SimpleFlowableFluid.Properties, T> factory) {
         return fluid(parent, currentName(), stillTexture, flowingTexture, factory);
     }
 
@@ -1061,10 +1059,10 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
 //    }
 
     public <P> FluidBuilder<SimpleFlowableFluid.Flowing, P> fluid(P parent, String name) {
-        return fluid(parent, name, new Identifier(getModid(), "block/" + currentName() + "_still"), new Identifier(getModid(), "block/" + currentName() + "_flow"));
+        return fluid(parent, name, new ResourceLocation(getModid(), "block/" + currentName() + "_still"), new ResourceLocation(getModid(), "block/" + currentName() + "_flow"));
     }
 
-    public <P> FluidBuilder<SimpleFlowableFluid.Flowing, P> fluid(P parent, String name, Identifier stillTexture, Identifier flowingTexture) {
+    public <P> FluidBuilder<SimpleFlowableFluid.Flowing, P> fluid(P parent, String name, ResourceLocation stillTexture, ResourceLocation flowingTexture) {
         return entry(name, callback -> FluidBuilder.create(this, parent, name, callback, stillTexture, flowingTexture));
     }
 
@@ -1072,7 +1070,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
 //        return entry(name, callback -> FluidBuilder.create(this, parent, name, callback, stillTexture, flowingTexture, attributesFactory));
 //    }
 
-    public <T extends SimpleFlowableFluid, P> FluidBuilder<T, P> fluid(P parent, String name, Identifier stillTexture, Identifier flowingTexture, NonNullFunction<SimpleFlowableFluid.Properties, T> factory) {
+    public <T extends SimpleFlowableFluid, P> FluidBuilder<T, P> fluid(P parent, String name, ResourceLocation stillTexture, ResourceLocation flowingTexture, NonNullFunction<SimpleFlowableFluid.Properties, T> factory) {
         return entry(name, callback -> FluidBuilder.create(this, parent, name, callback, stillTexture, flowingTexture, factory));
     }
 
@@ -1081,52 +1079,52 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
 //    }
 
     // Container
-    public <T extends ScreenHandler, SC extends Screen & ScreenHandlerProvider<T>> ContainerBuilder<T, SC, S> container(ContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
+    public <T extends AbstractContainerMenu, SC extends Screen & MenuAccess<T>> ContainerBuilder<T, SC, S> container(ContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
         return container(currentName(), factory, screenFactory);
     }
 
-    public <T extends ScreenHandler, SC extends Screen & ScreenHandlerProvider<T>> ContainerBuilder<T, SC, S> container(String name, ContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
+    public <T extends AbstractContainerMenu, SC extends Screen & MenuAccess<T>> ContainerBuilder<T, SC, S> container(String name, ContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
         return container(self(), name, factory, screenFactory);
     }
 
-    public <T extends ScreenHandler, SC extends Screen & ScreenHandlerProvider<T>, P> ContainerBuilder<T, SC, P> container(P parent, ContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
+    public <T extends AbstractContainerMenu, SC extends Screen & MenuAccess<T>, P> ContainerBuilder<T, SC, P> container(P parent, ContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
         return container(parent, currentName(), factory, screenFactory);
     }
 
-    public <T extends ScreenHandler, SC extends Screen & ScreenHandlerProvider<T>, P> ContainerBuilder<T, SC, P> container(P parent, String name, ContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
+    public <T extends AbstractContainerMenu, SC extends Screen & MenuAccess<T>, P> ContainerBuilder<T, SC, P> container(P parent, String name, ContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
         return entry(name, callback -> new ContainerBuilder<T, SC, P>(this, parent, name, callback, factory, screenFactory));
     }
 
-    public <T extends ScreenHandler, SC extends Screen & ScreenHandlerProvider<T>> ContainerBuilder<T, SC, S> container(ForgeContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
+    public <T extends AbstractContainerMenu, SC extends Screen & MenuAccess<T>> ContainerBuilder<T, SC, S> container(ForgeContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
         return container(currentName(), factory, screenFactory);
     }
 
-    public <T extends ScreenHandler, SC extends Screen & ScreenHandlerProvider<T>> ContainerBuilder<T, SC, S> container(String name, ForgeContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
+    public <T extends AbstractContainerMenu, SC extends Screen & MenuAccess<T>> ContainerBuilder<T, SC, S> container(String name, ForgeContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
         return container(self(), name, factory, screenFactory);
     }
 
-    public <T extends ScreenHandler, SC extends Screen & ScreenHandlerProvider<T>, P> ContainerBuilder<T, SC, P> container(P parent, ForgeContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
+    public <T extends AbstractContainerMenu, SC extends Screen & MenuAccess<T>, P> ContainerBuilder<T, SC, P> container(P parent, ForgeContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
         return container(parent, currentName(), factory, screenFactory);
     }
 
-    public <T extends ScreenHandler, SC extends Screen & ScreenHandlerProvider<T>, P> ContainerBuilder<T, SC, P> container(P parent, String name, ForgeContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
+    public <T extends AbstractContainerMenu, SC extends Screen & MenuAccess<T>, P> ContainerBuilder<T, SC, P> container(P parent, String name, ForgeContainerFactory<T> factory, NonNullSupplier<ScreenFactory<T, SC>> screenFactory) {
         return entry(name, callback -> new ContainerBuilder<T, SC, P>(this, parent, name, callback, factory, screenFactory));
     }
 
     // Enchantment
-    public <T extends Enchantment> EnchantmentBuilder<T, S> enchantment(EnchantmentTarget type, EnchantmentFactory<T> factory) {
+    public <T extends Enchantment> EnchantmentBuilder<T, S> enchantment(EnchantmentCategory type, EnchantmentFactory<T> factory) {
         return enchantment(self(), type, factory);
     }
 
-    public <T extends Enchantment> EnchantmentBuilder<T, S> enchantment(String name, EnchantmentTarget type, EnchantmentFactory<T> factory) {
+    public <T extends Enchantment> EnchantmentBuilder<T, S> enchantment(String name, EnchantmentCategory type, EnchantmentFactory<T> factory) {
         return enchantment(self(), name, type, factory);
     }
 
-    public <T extends Enchantment, P> EnchantmentBuilder<T, P> enchantment(P parent, EnchantmentTarget type, EnchantmentFactory<T> factory) {
+    public <T extends Enchantment, P> EnchantmentBuilder<T, P> enchantment(P parent, EnchantmentCategory type, EnchantmentFactory<T> factory) {
         return enchantment(parent, currentName(), type, factory);
     }
 
-    public <T extends Enchantment, P> EnchantmentBuilder<T, P> enchantment(P parent, String name, EnchantmentTarget type, EnchantmentFactory<T> factory) {
+    public <T extends Enchantment, P> EnchantmentBuilder<T, P> enchantment(P parent, String name, EnchantmentCategory type, EnchantmentFactory<T> factory) {
         return entry(name, callback -> EnchantmentBuilder.create(this, parent, name, callback, type, factory));
     }
 

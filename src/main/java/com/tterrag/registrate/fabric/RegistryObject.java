@@ -7,17 +7,15 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
 
 public class RegistryObject<T> implements Supplier<T> {
 	private static RegistryObject<?> EMPTY = new RegistryObject<>();
 
-	private final Identifier id;
+	private final ResourceLocation id;
 	@Nullable
 	private T object;
 
@@ -25,22 +23,22 @@ public class RegistryObject<T> implements Supplier<T> {
 		id = null;
 	}
 
-	private RegistryObject(Identifier id, Class<? super T> registryType) {
+	private RegistryObject(ResourceLocation id, Class<? super T> registryType) {
 		this(id, RegistryUtil.getRegistry(registryType));
 	}
 
 	@SuppressWarnings("unchecked")
-	private RegistryObject(Identifier id, Registry<? super T> registry) {
+	private RegistryObject(ResourceLocation id, Registry<? super T> registry) {
 		Objects.requireNonNull(registry);
 		this.id = id;
 		object = (T) registry.get(this.id);
 	}
 
-	public static <T> RegistryObject<T> of(Identifier id, Class<? super T> registryType) {
+	public static <T> RegistryObject<T> of(ResourceLocation id, Class<? super T> registryType) {
 		return new RegistryObject<>(id, registryType);
 	}
 
-	public static <T> RegistryObject<T> of(Identifier id, Registry<? super T> registry) {
+	public static <T> RegistryObject<T> of(ResourceLocation id, Registry<? super T> registry) {
 		return new RegistryObject<>(id, registry);
 	}
 
@@ -56,7 +54,7 @@ public class RegistryObject<T> implements Supplier<T> {
 		return object;
 	}
 
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return id;
 	}
 

@@ -1,16 +1,15 @@
 package com.tterrag.registrate.mixin;
 
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.FlowingFluid;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.FluidBlock;
-import net.minecraft.fluid.FlowableFluid;
-
-@Mixin(FluidBlock.class)
+@Mixin(LiquidBlock.class)
 public interface FluidBlockAccessor {
 	@Invoker("<init>")
-	static FluidBlock callInit(FlowableFluid fluid, AbstractBlock.Settings settings) {
+	static LiquidBlock callInit(FlowingFluid fluid, BlockBehaviour.Properties settings) {
 		throw new AssertionError();
 	}
 }

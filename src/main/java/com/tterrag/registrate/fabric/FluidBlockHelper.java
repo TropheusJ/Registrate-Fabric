@@ -1,13 +1,12 @@
 package com.tterrag.registrate.fabric;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.FluidBlock;
-import net.minecraft.fluid.FlowableFluid;
-
 import com.tterrag.registrate.mixin.FluidBlockAccessor;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.FlowingFluid;
 
 public class FluidBlockHelper {
-	public static FluidBlock createFluidBlock(FlowableFluid fluid, AbstractBlock.Settings settings) {
+	public static LiquidBlock createFluidBlock(FlowingFluid fluid, BlockBehaviour.Properties settings) {
 		return FluidBlockAccessor.callInit(fluid, settings);
 	}
 }

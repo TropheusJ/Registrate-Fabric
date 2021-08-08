@@ -2,23 +2,23 @@ package com.tterrag.registrate.builders;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.client.rendereregistry.v1.EntityRendererRegistry;
+import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.tags.Tag.Named;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.SpawnPlacements.SpawnPredicate;
+import net.minecraft.world.entity.SpawnPlacements.Type;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.levelgen.Heightmap;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnGroup;
-import net.minecraft.entity.SpawnRestriction.Location;
-import net.minecraft.entity.SpawnRestriction.SpawnPredicate;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.SpawnEggItem;
-import net.minecraft.tag.Tag.Identified;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.World;
-
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.fabric.EnvExecutor;
 import com.tterrag.registrate.fabric.RegistryObject;
@@ -62,23 +62,23 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
      * @param factory
      *            Factory to create the entity
      * @param classification
-     *            The {@link SpawnGroup} of the entity
+     *            The {@link MobCategory} of the entity
      * @return A new {@link EntityBuilder} with reasonable default data generators.
      */
     public static <T extends Entity, P> EntityBuilder<T, FabricEntityTypeBuilder<T>, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, EntityType.EntityFactory<T> factory,
-            SpawnGroup classification) {
+            MobCategory classification) {
         return new EntityBuilder<>(owner, parent, name, callback, factory, classification, FabricEntityTypeBuilder::create)
                 .defaultLang();
     }
     
     public static <T extends LivingEntity, P> EntityBuilder<T, FabricEntityTypeBuilder.Living<T>, P> createLiving(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, EntityType.EntityFactory<T> factory,
-            SpawnGroup classification) {
+            MobCategory classification) {
         return new EntityBuilder<>(owner, parent, name, callback, factory, classification, (s, f) -> FabricEntityTypeBuilder.createLiving().spawnGroup(s).entityFactory(f))
                 .defaultLang();
     }
     
-    public static <T extends MobEntity, P> EntityBuilder<T, FabricEntityTypeBuilder.Mob<T>, P> createMob(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, EntityType.EntityFactory<T> factory,
-            SpawnGroup classification) {
+    public static <T extends Mob, P> EntityBuilder<T, FabricEntityTypeBuilder.Mob<T>, P> createMob(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, EntityType.EntityFactory<T> factory,
+            MobCategory classification) {
         return new EntityBuilder<>(owner, parent, name, callback, factory, classification, (s, f) -> FabricEntityTypeBuilder.createMob().spawnGroup(s).entityFactory(f))
                 .defaultLang();
     }
@@ -88,13 +88,13 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
     private NonNullConsumer<B> builderCallback = $ -> {};
     
     @Nullable
-    private NonNullSupplier<EntityRendererRegistry.Factory> renderer;
+    private NonNullSupplier<EntityRendererProvider<T>> renderer;
     
     private boolean spawnConfigured;
     
     private @Nullable ItemBuilder<LazySpawnEggItem<T>, EntityBuilder<T, B, P>> spawnEggBuilder;
     
-    protected EntityBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, EntityType.EntityFactory<T> factory, SpawnGroup classification, NonNullBiFunction<SpawnGroup, EntityType.EntityFactory<T>, B> function) {
+    protected EntityBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, EntityType.EntityFactory<T> factory, MobCategory classification, NonNullBiFunction<MobCategory, EntityType.EntityFactory<T>, B> function) {
         super(owner, parent, name, callback, EntityType.class);
         this.builder = () -> function.apply(classification, factory);
     }
@@ -116,14 +116,14 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
      * Register an {@link EntityRenderer} for this entity.
      * <p>
      * 
-     * @apiNote This requires the {@link Class} of the entity object, which can only be gotten by inspecting an instance of it. Thus, the entity will be constructed with a {@code null} {@link World}
+     * @apiNote This requires the {@link Class} of the entity object, which can only be gotten by inspecting an instance of it. Thus, the entity will be constructed with a {@code null} {@link Level}
      *          to register the renderer.
      * 
      * @param renderer
-     *            A (server safe) supplier to an {@link EntityRendererRegistry.Factory} that will provide this entity's renderer
+     *            A (server safe) supplier to an {@link EntityRendererProvider} that will provide this entity's renderer
      * @return this {@link EntityBuilder}
      */
-    public EntityBuilder<T, B, P> renderer(NonNullSupplier<EntityRendererRegistry.Factory> renderer) {
+    public EntityBuilder<T, B, P> renderer(NonNullSupplier<EntityRendererProvider<T>> renderer) {
         if (this.renderer == null) { // First call only
             EnvExecutor.runWhenOn(EnvType.CLIENT, () -> this::registerRenderer);
         }
@@ -142,7 +142,7 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
     }
     
     /**
-     * Register a spawn placement for this entity. The entity must extend {@link MobEntity} and allow construction with a {@code null} {@link World}.
+     * Register a spawn placement for this entity. The entity must extend {@link Mob} and allow construction with a {@code null} {@link Level}.
      * <p>
      * Cannot be called more than once per builder.
      * 
@@ -158,7 +158,7 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
      */
     @Deprecated
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public EntityBuilder<T, B, P> spawnPlacement(Location type, Heightmap.Type heightmap, SpawnPredicate<T> predicate) {
+    public EntityBuilder<T, B, P> spawnPlacement(Type type, Heightmap.Types heightmap, SpawnPredicate<T> predicate) {
         if (spawnConfigured) {
             throw new IllegalStateException("Cannot configure spawn placement more than once");
         }
@@ -202,7 +202,7 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
      */
     @Deprecated
     public ItemBuilder<? extends SpawnEggItem, EntityBuilder<T, B, P>> spawnEgg(int primaryColor, int secondaryColor) {
-        ItemBuilder<LazySpawnEggItem<T>, EntityBuilder<T, B, P>> ret = getOwner().item(this, getName() + "_spawn_egg", p -> new LazySpawnEggItem<>(asSupplier(), primaryColor, secondaryColor, p)).properties(p -> p.group(ItemGroup.MISC))
+        ItemBuilder<LazySpawnEggItem<T>, EntityBuilder<T, B, P>> ret = getOwner().item(this, getName() + "_spawn_egg", p -> new LazySpawnEggItem<>(asSupplier(), primaryColor, secondaryColor, p)).properties(p -> (FabricItemSettings) p.tab(CreativeModeTab.TAB_MISC))
                 /*.model((ctx, prov) -> prov.withExistingParent(ctx.getName(), new Identifier("item/template_spawn_egg")))*/;
         if (this.spawnEggBuilder == null) { // First call only
             this.onRegister(this::injectSpawnEggType);
@@ -218,7 +218,7 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
      * @return this {@link EntityBuilder}
      */
     public EntityBuilder<T, B, P> defaultLang() {
-        return lang(EntityType::getTranslationKey);
+        return lang(EntityType::getDescriptionId);
     }
 
     /**
@@ -229,7 +229,7 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
      * @return this {@link EntityBuilder}
      */
     public EntityBuilder<T, B, P> lang(String name) {
-        return lang(EntityType::getTranslationKey, name);
+        return lang(EntityType::getDescriptionId, name);
     }
 
     /**
@@ -245,14 +245,14 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
 //    }
 
     /**
-     * Assign {@link Identified}{@code s} to this entity. Multiple calls will add additional tags.
+     * Assign {@link Named}{@code s} to this entity. Multiple calls will add additional tags.
      * 
      * @param tags
      *            The tags to assign
      * @return this {@link EntityBuilder}
      */
     @SafeVarargs
-    public final EntityBuilder<T, B, P> tag(Identified<EntityType<?>>... tags) {
+    public final EntityBuilder<T, B, P> tag(Named<EntityType<?>>... tags) {
         return this/*tag(ProviderType.ENTITY_TAGS, tags)*/;
     }
 

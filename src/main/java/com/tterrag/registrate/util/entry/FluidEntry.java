@@ -1,18 +1,15 @@
 package com.tterrag.registrate.util.entry;
 
 import java.util.Optional;
-
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.FlowingFluid;
+import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.Block;
-import net.minecraft.fluid.FlowableFluid;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
-
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.fabric.RegistryObject;
 
-public class FluidEntry<T extends FlowableFluid> extends RegistryEntry<T> {
+public class FluidEntry<T extends FlowingFluid> extends RegistryEntry<T> {
 
     private final @Nullable BlockEntry<? extends Block> block;
 
@@ -27,12 +24,12 @@ public class FluidEntry<T extends FlowableFluid> extends RegistryEntry<T> {
 
     @Override
     public <R> boolean is(R entry) {
-        return get().matchesType((Fluid) entry);
+        return get().isSame((Fluid) entry);
     }
 
     @SuppressWarnings({ "unchecked", "null" })
-    <S extends FlowableFluid> S getSource() {
-        return (S) get().getStill();
+    <S extends FlowingFluid> S getSource() {
+        return (S) get().getSource();
     }
 
     @SuppressWarnings({ "unchecked", "null" })
@@ -42,6 +39,6 @@ public class FluidEntry<T extends FlowableFluid> extends RegistryEntry<T> {
 
     @SuppressWarnings({ "unchecked", "null" })
     <I extends Item> Optional<I> getBucket() {
-        return Optional.ofNullable((I) get().getBucketItem());
+        return Optional.ofNullable((I) get().getBucket());
     }
 }

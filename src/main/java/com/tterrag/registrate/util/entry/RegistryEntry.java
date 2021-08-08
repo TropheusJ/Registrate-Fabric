@@ -2,11 +2,8 @@ package com.tterrag.registrate.util.entry;
 
 import java.util.Objects;
 import java.util.function.Predicate;
-
+import net.minecraft.core.Registry;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.util.registry.Registry;
-
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.fabric.RegistryObject;
 import com.tterrag.registrate.fabric.RegistryUtil;
@@ -151,7 +148,7 @@ public class RegistryEntry<T> implements NonNullSupplier<T> {
     }
 
     @javax.annotation.Generated("lombok")
-    public net.minecraft.util.Identifier getId() {
+    public net.minecraft.resources.ResourceLocation getId() {
         return this.delegate.getId();
     }
 

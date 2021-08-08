@@ -1,13 +1,12 @@
 package com.tterrag.registrate.util.entry;
 
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemConvertible;
-import net.minecraft.item.ItemStack;
-
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.fabric.RegistryObject;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
 
-public class ItemProviderEntry<T extends ItemConvertible> extends RegistryEntry<T> {
+public class ItemProviderEntry<T extends ItemLike> extends RegistryEntry<T> {
 
     public ItemProviderEntry(AbstractRegistrate<?> owner, RegistryObject<T> delegate) {
         super(owner, delegate);

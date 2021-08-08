@@ -3,13 +3,12 @@ package com.tterrag.registrate.providers.loot;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.ValidationContext;
 
-import net.minecraft.loot.LootTable;
-import net.minecraft.loot.LootTableReporter;
-import net.minecraft.util.Identifier;
+public interface RegistrateLootTables extends Consumer<BiConsumer<ResourceLocation, LootTable.Builder>> {
 
-public interface RegistrateLootTables extends Consumer<BiConsumer<Identifier, LootTable.Builder>> {
-
-    default void validate(Map<Identifier, LootTable> map, LootTableReporter validationresults) {}
+    default void validate(Map<ResourceLocation, LootTable> map, ValidationContext validationresults) {}
     
 }

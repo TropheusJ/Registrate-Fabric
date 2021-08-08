@@ -2,7 +2,6 @@
   "schemaVersion": 1,
   "id": "registrate",
   "version": "${version}",
-
   "name": "Registrate for Fabric",
   "description": "Fabric port of Registrate. Helper library to make creating and registering objects simpler.",
   "authors": [
@@ -26,10 +25,12 @@
     "registrate.mixins.json"
   ],
 
+  "accessWidener": "registrate.accessWidener",
+
   "depends": {
     "fabricloader": ">=0.7.4",
     "fabric": "*",
-    "minecraft": "1.16.x"
+    "minecraft": ">=1.17.1"
   },
 
   "custom": {

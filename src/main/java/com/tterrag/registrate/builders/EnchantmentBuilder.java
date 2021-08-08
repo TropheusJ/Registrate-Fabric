@@ -2,11 +2,9 @@ package com.tterrag.registrate.builders;
 
 import java.util.Arrays;
 import java.util.EnumSet;
-
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentTarget;
-import net.minecraft.entity.EquipmentSlot;
-
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentCategory;
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
 import com.tterrag.registrate.util.nullness.NonnullType;
@@ -25,7 +23,7 @@ public class EnchantmentBuilder<T extends Enchantment, P> extends AbstractBuilde
     @FunctionalInterface
     public interface EnchantmentFactory<T extends Enchantment> {
         
-        T create(Enchantment.Rarity rarity, EnchantmentTarget type, EquipmentSlot... slots);
+        T create(Enchantment.Rarity rarity, EnchantmentCategory type, EquipmentSlot... slots);
     }
 
     /**
@@ -49,24 +47,24 @@ public class EnchantmentBuilder<T extends Enchantment, P> extends AbstractBuilde
      * @param callback
      *            A callback used to actually register the built entry
      * @param type
-     *            The {@link EnchantmentTarget type} of the enchantment
+     *            The {@link EnchantmentCategory type} of the enchantment
      * @param factory
      *            Factory to create the enchantment
      * @return A new {@link EnchantmentBuilder} with reasonable default data generators.
      */
-    public static <T extends Enchantment, P> EnchantmentBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, EnchantmentTarget type, EnchantmentFactory<T> factory) {
+    public static <T extends Enchantment, P> EnchantmentBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, EnchantmentCategory type, EnchantmentFactory<T> factory) {
         return new EnchantmentBuilder<>(owner, parent, name, callback, type, factory)
                 .defaultLang();
     }
 
     private Enchantment.Rarity rarity = Enchantment.Rarity.COMMON;
-    private final EnchantmentTarget type;
+    private final EnchantmentCategory type;
     @SuppressWarnings("null")
     private EnumSet<EquipmentSlot> slots = EnumSet.noneOf(EquipmentSlot.class);
 
     private final EnchantmentFactory<T> factory;
 
-    protected EnchantmentBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, EnchantmentTarget type, EnchantmentFactory<T> factory) {
+    protected EnchantmentBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, EnchantmentCategory type, EnchantmentFactory<T> factory) {
         super(owner, parent, name, callback, Enchantment.class);
         this.factory = factory;
         this.type = type;
@@ -112,7 +110,7 @@ public class EnchantmentBuilder<T extends Enchantment, P> extends AbstractBuilde
      * @return this {@link EnchantmentBuilder}
      */
     public EnchantmentBuilder<T, P> defaultLang() {
-        return lang(Enchantment::getTranslationKey);
+        return lang(Enchantment::getDescriptionId);
     }
 
     /**
@@ -123,7 +121,7 @@ public class EnchantmentBuilder<T extends Enchantment, P> extends AbstractBuilde
      * @return this {@link EnchantmentBuilder}
      */
     public EnchantmentBuilder<T, P> lang(String name) {
-        return lang(Enchantment::getTranslationKey, name);
+        return lang(Enchantment::getDescriptionId, name);
     }
 
     @Override

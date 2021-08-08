@@ -1,14 +1,12 @@
 package com.tterrag.registrate.util.entry;
 
 import java.util.Optional;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockView;
-
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.fabric.RegistryObject;
 
@@ -24,8 +22,8 @@ public class TileEntityEntry<T extends BlockEntity> extends RegistryEntry<BlockE
      * @return The instance
      */
     @SuppressWarnings("null")
-    public T create() {
-        return get().instantiate();
+    public T create(BlockPos pos, BlockState state) {
+        return get().create(pos, state);
     }
 
     /**
@@ -49,7 +47,7 @@ public class TileEntityEntry<T extends BlockEntity> extends RegistryEntry<BlockE
      * @return An {@link Optional} containing the instance, if it exists and matches this type. Otherwise, {@link Optional#empty()}.
      */
     @SuppressWarnings("null")
-    public Optional<T> get(BlockView world, BlockPos pos) {
+    public Optional<T> get(BlockGetter world, BlockPos pos) {
         return Optional.ofNullable(getNullable(world, pos));
     }
 
@@ -63,7 +61,7 @@ public class TileEntityEntry<T extends BlockEntity> extends RegistryEntry<BlockE
      * @return The instance, if it exists and matches this type. Otherwise, {@code null}.
      */
     @SuppressWarnings("unchecked")
-    public @Nullable T getNullable(BlockView world, BlockPos pos) {
+    public @Nullable T getNullable(BlockGetter world, BlockPos pos) {
         BlockEntity te = world.getBlockEntity(pos);
         return is(te) ? (T) te : null;
     }

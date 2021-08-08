@@ -8,14 +8,13 @@ import java.util.function.Supplier;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.client.rendereregistry.v1.BlockEntityRendererRegistry;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.jetbrains.annotations.Nullable;
-
-import net.minecraft.block.Block;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.fabric.EnvExecutor;
 import com.tterrag.registrate.fabric.RegistryObject;
@@ -120,16 +119,14 @@ public class TileEntityBuilder<T extends BlockEntity, P> extends AbstractBuilder
 //                ClientRegistry.bindTileEntityRenderer(getEntry(), renderer.get());
 //            }
 //        });
-        onRegister(entry -> {
-            BlockEntityRendererRegistry.INSTANCE.register((BlockEntityType) entry, (Function) renderer.get());
-        });
+        onRegister(entry -> BlockEntityRendererRegistry.INSTANCE.register((BlockEntityType) entry, (BlockEntityRendererProvider<? super BlockEntity>) renderer.get()));
     }
-
+    
     @Override
     protected BlockEntityType<T> createEntry() {
         NonNullFunction<BlockEntityType<T>, ? extends T> factory = this.factory;
         Supplier<BlockEntityType<T>> supplier = asSupplier();
-        return BlockEntityType.Builder.<T>create(() -> factory.apply(supplier.get()), validBlocks.stream().map(NonNullSupplier::get).toArray(Block[]::new))
+        return BlockEntityType.Builder.<T>of((pos, state) -> factory.apply(supplier.get()), validBlocks.stream().map(NonNullSupplier::get).toArray(Block[]::new))
                 .build(null);
     }
     
