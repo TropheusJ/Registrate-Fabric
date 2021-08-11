@@ -961,39 +961,19 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
     }
 
     // Tile Entities
-    @Deprecated
-    public <T extends BlockEntity> TileEntityBuilder<T, S> tileEntity(NonNullSupplier<? extends T> factory) {
+    public <T extends BlockEntity> TileEntityBuilder<T, S> tileEntity(TileEntityBuilder.BlockEntityFactory<T> factory) {
         return tileEntity(self(), factory);
     }
 
-    @Deprecated
-    public <T extends BlockEntity> TileEntityBuilder<T, S> tileEntity(String name, NonNullSupplier<? extends T> factory) {
+    public <T extends BlockEntity> TileEntityBuilder<T, S> tileEntity(String name, TileEntityBuilder.BlockEntityFactory<T> factory) {
         return tileEntity(self(), name, factory);
     }
 
-    @Deprecated
-    public <T extends BlockEntity, P> TileEntityBuilder<T, P> tileEntity(P parent, NonNullSupplier<? extends T> factory) {
+    public <T extends BlockEntity, P> TileEntityBuilder<T, P> tileEntity(P parent, TileEntityBuilder.BlockEntityFactory<T> factory) {
         return tileEntity(parent, currentName(), factory);
     }
 
-    @Deprecated
-    public <T extends BlockEntity, P> TileEntityBuilder<T, P> tileEntity(P parent, String name, NonNullSupplier<? extends T> factory) {
-        return tileEntity(parent, name, $ -> factory.get());
-    }
-
-    public <T extends BlockEntity> TileEntityBuilder<T, S> tileEntity(NonNullFunction<BlockEntityType<T>, ? extends T> factory) {
-        return tileEntity(self(), factory);
-    }
-
-    public <T extends BlockEntity> TileEntityBuilder<T, S> tileEntity(String name, NonNullFunction<BlockEntityType<T>, ? extends T> factory) {
-        return tileEntity(self(), name, factory);
-    }
-
-    public <T extends BlockEntity, P> TileEntityBuilder<T, P> tileEntity(P parent, NonNullFunction<BlockEntityType<T>, ? extends T> factory) {
-        return tileEntity(parent, currentName(), factory);
-    }
-
-    public <T extends BlockEntity, P> TileEntityBuilder<T, P> tileEntity(P parent, String name, NonNullFunction<BlockEntityType<T>, ? extends T> factory) {
+    public <T extends BlockEntity, P> TileEntityBuilder<T, P> tileEntity(P parent, String name, TileEntityBuilder.BlockEntityFactory<T> factory) {
         return entry(name, callback -> TileEntityBuilder.create(this, parent, name, callback, factory));
     }
 
