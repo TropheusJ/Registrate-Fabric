@@ -132,13 +132,15 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
     }
     
     protected void registerRenderer() {
-        onRegister(entry -> {
-            try {
-                EntityRendererRegistry.INSTANCE.register(entry, renderer.get());
-            } catch (Exception e) {
-                throw new IllegalStateException("Failed to register renderer for Entity " + get().getId(), e);
-            }
-        });
+        if (renderer != null) {
+            onRegister(entry -> {
+                try {
+                    EntityRendererRegistry.INSTANCE.register(entry, renderer.get());
+                } catch (Exception e) {
+                    throw new IllegalStateException("Failed to register renderer for Entity " + get().getId(), e);
+                }
+            });
+        }
     }
     
     /**
