@@ -8,9 +8,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(BlockEntityRenderers.class)
-public class BlockEntityRenderersAccessor {
+public interface BlockEntityRenderersAccessor {
 	@Invoker("register")
-	public static <T extends BlockEntity> void invokeRegister(BlockEntityType<? extends T> blockEntityType, BlockEntityRendererProvider<T> blockEntityRendererProvider) {
+	static <T extends BlockEntity> void invokeRegister(BlockEntityType<? extends T> blockEntityType, BlockEntityRendererProvider<T> blockEntityRendererProvider) {
 		throw new RuntimeException("Mixin not applied!");
 	}
 }

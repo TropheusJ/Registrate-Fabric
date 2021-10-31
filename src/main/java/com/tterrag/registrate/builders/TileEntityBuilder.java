@@ -126,7 +126,7 @@ public class TileEntityBuilder<T extends BlockEntity, P> extends AbstractBuilder
 //                ClientRegistry.bindTileEntityRenderer(getEntry(), renderer.get());
 //            }
 //        });
-        BlockEntityRenderersAccessor.invokeRegister(getEntry(), renderer.get()::apply);
+        onRegister(entry -> BlockEntityRenderersAccessor.invokeRegister(entry, renderer.get()::apply));
     }
     
     @Override
