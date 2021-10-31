@@ -6,11 +6,13 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.tterrag.registrate.mixin.BlockEntityRenderersAccessor;
 import net.fabricmc.api.EnvType;
-import net.fabricmc.fabric.api.client.rendereregistry.v1.BlockEntityRendererRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -36,7 +38,7 @@ import com.tterrag.registrate.util.nullness.NonNullSupplier;
 public class TileEntityBuilder<T extends BlockEntity, P> extends AbstractBuilder<BlockEntityType<?>, BlockEntityType<T>, P, TileEntityBuilder<T, P>> {
     
     public interface BlockEntityFactory<T extends BlockEntity> {
-        public T create(BlockPos pos, BlockState state, BlockEntityType<T> type);
+        public T create(BlockEntityType<T> type, BlockPos pos, BlockState state);
     }
     
     /**
@@ -67,7 +69,7 @@ public class TileEntityBuilder<T extends BlockEntity, P> extends AbstractBuilder
     private final BlockEntityFactory<T> factory;
     private final Set<NonNullSupplier<? extends Block>> validBlocks = new HashSet<>();
     @Nullable
-    private NonNullSupplier<Function<BlockEntityRenderDispatcher, BlockEntityRenderer<? super T>>> renderer;
+    private NonNullSupplier<NonNullFunction<BlockEntityRendererProvider.Context, BlockEntityRenderer<? super T>>> renderer;
 
     protected TileEntityBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, BlockEntityFactory<T> factory) {
         super(owner, parent, name, callback, BlockEntityType.class);
@@ -109,7 +111,7 @@ public class TileEntityBuilder<T extends BlockEntity, P> extends AbstractBuilder
      *            A (server safe) supplier to an {@link Function} that will provide this tile entity's renderer given the renderer dispatcher
      * @return this {@link TileEntityBuilder}
      */
-    public TileEntityBuilder<T, P> renderer(NonNullSupplier<Function<BlockEntityRenderDispatcher, BlockEntityRenderer<? super T>>> renderer) {
+    public TileEntityBuilder<T, P> renderer(NonNullSupplier<NonNullFunction<BlockEntityRendererProvider.Context, BlockEntityRenderer<? super T>>> renderer) {
         if (this.renderer == null) { // First call only
             EnvExecutor.runWhenOn(EnvType.CLIENT, () -> this::registerRenderer);
         }
@@ -117,7 +119,6 @@ public class TileEntityBuilder<T extends BlockEntity, P> extends AbstractBuilder
         return this;
     }
     
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     protected void registerRenderer() {
 //        OneTimeEventReceiver.addModListener(FMLClientSetupEvent.class, $ -> {
 //            NonNullSupplier<Function<BlockEntityRenderDispatcher, BlockEntityRenderer<? super T>>> renderer = this.renderer;
@@ -125,14 +126,14 @@ public class TileEntityBuilder<T extends BlockEntity, P> extends AbstractBuilder
 //                ClientRegistry.bindTileEntityRenderer(getEntry(), renderer.get());
 //            }
 //        });
-        onRegister(entry -> BlockEntityRendererRegistry.INSTANCE.register((BlockEntityType) entry, (BlockEntityRendererProvider<? super BlockEntity>) renderer.get()));
+        BlockEntityRenderersAccessor.invokeRegister(getEntry(), renderer.get()::apply);
     }
     
     @Override
     protected BlockEntityType<T> createEntry() {
         BlockEntityFactory<T> factory = this.factory;
         Supplier<BlockEntityType<T>> supplier = asSupplier();
-        return BlockEntityType.Builder.of((pos, state) -> factory.create(pos, state, supplier.get()), validBlocks.stream().map(NonNullSupplier::get).toArray(Block[]::new))
+        return BlockEntityType.Builder.of((pos, state) -> factory.create(supplier.get(), pos, state), validBlocks.stream().map(NonNullSupplier::get).toArray(Block[]::new))
                 .build(null);
     }
     

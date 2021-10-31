@@ -8,6 +8,9 @@
     "ScreenHandlerRegistryMixin",
     "SpawnEggItemAccessor"
   ],
+  "client": [
+    "BlockEntityRenderersAccessor"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
