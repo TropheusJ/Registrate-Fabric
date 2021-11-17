@@ -23,6 +23,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
 import com.tterrag.registrate.AbstractRegistrate;
@@ -321,14 +322,14 @@ public class FluidBuilder<T extends SimpleFlowableFluid, P> extends AbstractBuil
      *            A factory for the block, which accepts the block object and properties and returns a new block
      * @return the {@link BlockBuilder} for the {@link LiquidBlock}
      */
-    public <B extends LiquidBlock> BlockBuilder<B, FluidBuilder<T, P>> block(NonNullBiFunction<NonNullSupplier<? extends T>, FabricBlockSettings, ? extends B> factory) {
+    public <B extends LiquidBlock> BlockBuilder<B, FluidBuilder<T, P>> block(NonNullBiFunction<NonNullSupplier<? extends T>, BlockBehaviour.Properties, ? extends B> factory) {
         if (this.defaultBlock == Boolean.FALSE) {
             throw new IllegalStateException("Only one call to block/noBlock per builder allowed");
         }
         this.defaultBlock = false;
         NonNullSupplier<T> supplier = asSupplier();
         return getOwner().<B, FluidBuilder<T, P>>block(this, sourceName, p -> factory.apply(supplier, p))
-                .properties(p -> (FabricBlockSettings) FabricBlockSettings.copyOf(Blocks.WATER).noDrops())
+                .properties(p -> FabricBlockSettings.copyOf(Blocks.WATER).noDrops())
 //                .properties(p -> {
 //                    // TODO is this ok?
 //                    FluidAttributes attrs = this.attributes.get().build(Fluids.WATER);
@@ -340,8 +341,8 @@ public class FluidBuilder<T extends SimpleFlowableFluid, P> extends AbstractBuil
 
     // Fabric TODO
     @SuppressWarnings("unchecked")
-    public <B extends LiquidBlock> BlockBuilder<B, FluidBuilder<T, P>> block1(NonNullBiFunction<? extends T, FabricBlockSettings, ? extends B> factory) {
-        return block((supplier, settings) -> ((NonNullBiFunction<T, FabricBlockSettings, ? extends B>) factory).apply(supplier.get(), settings));
+    public <B extends LiquidBlock> BlockBuilder<B, FluidBuilder<T, P>> block1(NonNullBiFunction<? extends T, BlockBehaviour.Properties, ? extends B> factory) {
+        return block((supplier, settings) -> ((NonNullBiFunction<T, BlockBehaviour.Properties, ? extends B>) factory).apply(supplier.get(), settings));
     }
 
     @Beta
@@ -387,13 +388,13 @@ public class FluidBuilder<T extends SimpleFlowableFluid, P> extends AbstractBuil
      *            A factory for the bucket item, which accepts the fluid object supplier and properties and returns a new item
      * @return the {@link ItemBuilder} for the {@link BucketItem}
      */
-    public <I extends BucketItem> ItemBuilder<I, FluidBuilder<T, P>> bucket(NonNullBiFunction<? extends SimpleFlowableFluid, FabricItemSettings, ? extends I> factory) {
+    public <I extends BucketItem> ItemBuilder<I, FluidBuilder<T, P>> bucket(NonNullBiFunction<? extends SimpleFlowableFluid, Item.Properties, ? extends I> factory) {
         if (this.defaultBucket == Boolean.FALSE) {
             throw new IllegalStateException("Only one call to bucket/noBucket per builder allowed");
         }
         this.defaultBucket = false;
-        return getOwner().<I, FluidBuilder<T, P>>item(this, bucketName, p -> ((NonNullBiFunction<SimpleFlowableFluid, FabricItemSettings, ? extends I>) factory).apply(this.source.get(), p)) // Fabric TODO
-                .properties(p -> (FabricItemSettings) p.craftRemainder(Items.BUCKET).stacksTo(1))
+        return getOwner().<I, FluidBuilder<T, P>>item(this, bucketName, p -> ((NonNullBiFunction<SimpleFlowableFluid, Item.Properties, ? extends I>) factory).apply(this.source.get(), p)) // Fabric TODO
+                .properties(p -> p.craftRemainder(Items.BUCKET).stacksTo(1))
                 /*.model((ctx, prov) -> prov.generated(ctx::getEntry, new Identifier(getOwner().getModid(), "item/" + bucketName)))*/;
     }
 

@@ -54,7 +54,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      *            Factory to create the item
      * @return A new {@link ItemBuilder} with reasonable default data generators.
      */
-    public static <T extends Item, P> ItemBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<FabricItemSettings, T> factory) {
+    public static <T extends Item, P> ItemBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<Item.Properties, T> factory) {
         return create(owner, parent, name, callback, factory, null);
     }
     
@@ -86,21 +86,21 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      *            The {@link CreativeModeTab} for the object, can be null for none
      * @return A new {@link ItemBuilder} with reasonable default data generators.
      */
-    public static <T extends Item, P> ItemBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<FabricItemSettings, T> factory, @Nullable NonNullSupplier<? extends CreativeModeTab> group) {
+    public static <T extends Item, P> ItemBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<Item.Properties, T> factory, @Nullable NonNullSupplier<? extends CreativeModeTab> group) {
         return new ItemBuilder<>(owner, parent, name, callback, factory)
                 .defaultModel().defaultLang()
                 .transform(ib -> group == null ? ib : ib.group(group));
     }
 
-    private final NonNullFunction<FabricItemSettings, T> factory;
+    private final NonNullFunction<Item.Properties, T> factory;
     
-    private NonNullSupplier<FabricItemSettings> initialProperties = FabricItemSettings::new;
-    private NonNullFunction<FabricItemSettings, FabricItemSettings> propertiesCallback = NonNullUnaryOperator.identity();
+    private NonNullSupplier<Item.Properties> initialProperties = FabricItemSettings::new;
+    private NonNullFunction<Item.Properties, Item.Properties> propertiesCallback = NonNullUnaryOperator.identity();
     
     @Nullable
     private NonNullSupplier<Supplier<ItemColor>> colorHandler;
     
-    protected ItemBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<FabricItemSettings, T> factory) {
+    protected ItemBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<Item.Properties, T> factory) {
         super(owner, parent, name, callback, Item.class);
         this.factory = factory;
     }
@@ -115,7 +115,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      *            The action to perform on the properties
      * @return this {@link ItemBuilder}
      */
-    public ItemBuilder<T, P> properties(NonNullUnaryOperator<FabricItemSettings> func) {
+    public ItemBuilder<T, P> properties(NonNullUnaryOperator<Item.Properties> func) {
         propertiesCallback = propertiesCallback.andThen(func);
         return this;
     }
@@ -127,13 +127,13 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      *            A supplier to to create the initial properties
      * @return this {@link ItemBuilder}
      */
-    public ItemBuilder<T, P> initialProperties(NonNullSupplier<FabricItemSettings> properties) {
+    public ItemBuilder<T, P> initialProperties(NonNullSupplier<Item.Properties> properties) {
         initialProperties = properties;
         return this;
     }
 
     public ItemBuilder<T, P> group(NonNullSupplier<? extends CreativeModeTab> group) {
-        return properties(p -> (FabricItemSettings) p.tab(group.get()));
+        return properties(p -> p.tab(group.get()));
     }
     
     /**
@@ -231,7 +231,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     
     @Override
     protected T createEntry() {
-        FabricItemSettings properties = this.initialProperties.get();
+        Item.Properties properties = this.initialProperties.get();
         properties = propertiesCallback.apply(properties);
         return factory.apply(properties);
     }

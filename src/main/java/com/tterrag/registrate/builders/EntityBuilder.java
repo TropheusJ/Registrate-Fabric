@@ -202,7 +202,7 @@ public class EntityBuilder<T extends Entity, B extends FabricEntityTypeBuilder<T
      */
     @Deprecated
     public ItemBuilder<? extends SpawnEggItem, EntityBuilder<T, B, P>> spawnEgg(int primaryColor, int secondaryColor) {
-        ItemBuilder<LazySpawnEggItem<T>, EntityBuilder<T, B, P>> ret = getOwner().item(this, getName() + "_spawn_egg", p -> new LazySpawnEggItem<>(asSupplier(), primaryColor, secondaryColor, p)).properties(p -> (FabricItemSettings) p.tab(CreativeModeTab.TAB_MISC))
+        ItemBuilder<LazySpawnEggItem<T>, EntityBuilder<T, B, P>> ret = getOwner().item(this, getName() + "_spawn_egg", p -> new LazySpawnEggItem<>(asSupplier(), primaryColor, secondaryColor, p)).properties(p -> p.tab(CreativeModeTab.TAB_MISC))
                 /*.model((ctx, prov) -> prov.withExistingParent(ctx.getName(), new Identifier("item/template_spawn_egg")))*/;
         if (this.spawnEggBuilder == null) { // First call only
             this.onRegister(this::injectSpawnEggType);

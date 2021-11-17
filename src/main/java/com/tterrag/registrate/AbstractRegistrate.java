@@ -41,6 +41,7 @@ import net.minecraft.world.item.enchantment.EnchantmentCategory;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.Material;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -859,52 +860,52 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
     }
 
     // Items
-    public <T extends Item> ItemBuilder<T, S> item(NonNullFunction<FabricItemSettings, T> factory) {
+    public <T extends Item> ItemBuilder<T, S> item(NonNullFunction<Item.Properties, T> factory) {
         return item(self(), factory);
     }
 
-    public <T extends Item> ItemBuilder<T, S> item(String name, NonNullFunction<FabricItemSettings, T> factory) {
+    public <T extends Item> ItemBuilder<T, S> item(String name, NonNullFunction<Item.Properties, T> factory) {
         return item(self(), name, factory);
     }
 
-    public <T extends Item, P> ItemBuilder<T, P> item(P parent, NonNullFunction<FabricItemSettings, T> factory) {
+    public <T extends Item, P> ItemBuilder<T, P> item(P parent, NonNullFunction<Item.Properties, T> factory) {
         return item(parent, currentName(), factory);
     }
 
-    public <T extends Item, P> ItemBuilder<T, P> item(P parent, String name, NonNullFunction<FabricItemSettings, T> factory) {
+    public <T extends Item, P> ItemBuilder<T, P> item(P parent, String name, NonNullFunction<Item.Properties, T> factory) {
         return entry(name, callback -> ItemBuilder.create(this, parent, name, callback, factory, this.currentGroup));
     }
-
+    
     // Blocks
-    public <T extends Block> BlockBuilder<T, S> block(NonNullFunction<FabricBlockSettings, T> factory) {
+    public <T extends Block> BlockBuilder<T, S> block(NonNullFunction<BlockBehaviour.Properties, T> factory) {
         return block(self(), factory);
     }
 
-    public <T extends Block> BlockBuilder<T, S> block(String name, NonNullFunction<FabricBlockSettings, T> factory) {
+    public <T extends Block> BlockBuilder<T, S> block(String name, NonNullFunction<BlockBehaviour.Properties, T> factory) {
         return block(self(), name, factory);
     }
 
-    public <T extends Block, P> BlockBuilder<T, P> block(P parent, NonNullFunction<FabricBlockSettings, T> factory) {
+    public <T extends Block, P> BlockBuilder<T, P> block(P parent, NonNullFunction<BlockBehaviour.Properties, T> factory) {
         return block(parent, currentName(), factory);
     }
 
-    public <T extends Block, P> BlockBuilder<T, P> block(P parent, String name, NonNullFunction<FabricBlockSettings, T> factory) {
+    public <T extends Block, P> BlockBuilder<T, P> block(P parent, String name, NonNullFunction<BlockBehaviour.Properties, T> factory) {
         return block(parent, name, Material.STONE, factory);
     }
 
-    public <T extends Block> BlockBuilder<T, S> block(Material material, NonNullFunction<FabricBlockSettings, T> factory) {
+    public <T extends Block> BlockBuilder<T, S> block(Material material, NonNullFunction<BlockBehaviour.Properties, T> factory) {
         return block(self(), material, factory);
     }
 
-    public <T extends Block> BlockBuilder<T, S> block(String name, Material material, NonNullFunction<FabricBlockSettings, T> factory) {
+    public <T extends Block> BlockBuilder<T, S> block(String name, Material material, NonNullFunction<BlockBehaviour.Properties, T> factory) {
         return block(self(), name, material, factory);
     }
 
-    public <T extends Block, P> BlockBuilder<T, P> block(P parent, Material material, NonNullFunction<FabricBlockSettings, T> factory) {
+    public <T extends Block, P> BlockBuilder<T, P> block(P parent, Material material, NonNullFunction<BlockBehaviour.Properties, T> factory) {
         return block(parent, currentName(), material, factory);
     }
 
-    public <T extends Block, P> BlockBuilder<T, P> block(P parent, String name, Material material, NonNullFunction<FabricBlockSettings, T> factory) {
+    public <T extends Block, P> BlockBuilder<T, P> block(P parent, String name, Material material, NonNullFunction<BlockBehaviour.Properties, T> factory) {
         return entry(name, callback -> BlockBuilder.create(this, parent, name, callback, factory, material));
     }
 
