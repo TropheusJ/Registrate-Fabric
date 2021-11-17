@@ -34,7 +34,7 @@ import com.tterrag.registrate.util.nullness.NonNullSupplier;
 import com.tterrag.registrate.util.nullness.NonNullUnaryOperator;
 
 /**
- * A builder for blocks, allows for customization of the {@link FabricBlockSettings}, creation of block items, and configuration of data associated with blocks (loot tables, recipes, etc.).
+ * A builder for blocks, allows for customization of the {@link BlockBehaviour.Properties}, creation of block items, and configuration of data associated with blocks (loot tables, recipes, etc.).
  * 
  * @param <T>
  *            The type of block being built
@@ -69,24 +69,24 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * @param factory
      *            Factory to create the block
      * @param material
-     *            The {@link Material} to use for the initial {@link FabricBlockSettings} object
+     *            The {@link Material} to use for the initial {@link BlockBehaviour.Properties} object
      * @return A new {@link BlockBuilder} with reasonable default data generators.
      */
-    public static <T extends Block, P> BlockBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<FabricBlockSettings, T> factory, Material material) {
-        return new BlockBuilder<>(owner, parent, name, callback, factory, () -> FabricBlockSettings.of(material))
-                /*.defaultBlockstate().defaultLoot().defaultLang()*/;
+    public static <T extends Block, P> BlockBuilder<T, P> create(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<BlockBehaviour.Properties, T> factory, Material material) {
+        return new BlockBuilder<>(owner, parent, name, callback, factory, () -> BlockBehaviour.Properties.of(material))
+                .defaultBlockstate().defaultLoot().defaultLang();
     }
 
-    private final NonNullFunction<FabricBlockSettings, T> factory;
+    private final NonNullFunction<BlockBehaviour.Properties, T> factory;
     
-    private NonNullSupplier<FabricBlockSettings> initialProperties;
-    private NonNullFunction<FabricBlockSettings, FabricBlockSettings> propertiesCallback = NonNullUnaryOperator.identity();
+    private NonNullSupplier<BlockBehaviour.Properties> initialProperties;
+    private NonNullFunction<BlockBehaviour.Properties, BlockBehaviour.Properties> propertiesCallback = NonNullUnaryOperator.identity();
     private List<Supplier<Supplier<RenderType>>> renderLayers = new ArrayList<>(1);
     
     @Nullable
     private NonNullSupplier<Supplier<BlockColor>> colorHandler;
 
-    protected BlockBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<FabricBlockSettings, T> factory, NonNullSupplier<FabricBlockSettings> initialProperties) {
+    protected BlockBuilder(AbstractRegistrate<?> owner, P parent, String name, BuilderCallback callback, NonNullFunction<BlockBehaviour.Properties, T> factory, NonNullSupplier<BlockBehaviour.Properties> initialProperties) {
         super(owner, parent, name, callback, Block.class);
         this.factory = factory;
         this.initialProperties = initialProperties;
@@ -102,7 +102,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      *            The action to perform on the properties
      * @return this {@link BlockBuilder}
      */
-    public BlockBuilder<T, P> properties(NonNullUnaryOperator<FabricBlockSettings> func) {
+    public BlockBuilder<T, P> properties(NonNullUnaryOperator<BlockBehaviour.Properties> func) {
         propertiesCallback = propertiesCallback.andThen(func);
         return this;
     }
@@ -115,7 +115,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * @return this {@link BlockBuilder}
      */
     public BlockBuilder<T, P> initialProperties(Material material) {
-        initialProperties = () -> FabricBlockSettings.of(material);
+        initialProperties = () -> BlockBehaviour.Properties.of(material);
         return this;
     }
 
@@ -129,7 +129,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * @return this {@link BlockBuilder}
      */
     public BlockBuilder<T, P> initialProperties(Material material, DyeColor color) {
-        initialProperties = () -> FabricBlockSettings.of(material, color);
+        initialProperties = () -> BlockBehaviour.Properties.of(material, color);
         return this;
     }
 
@@ -143,7 +143,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * @return this {@link BlockBuilder}
      */
     public BlockBuilder<T, P> initialProperties(Material material, MaterialColor color) {
-        initialProperties = () -> FabricBlockSettings.of(material, color);
+        initialProperties = () -> BlockBehaviour.Properties.of(material, color);
         return this;
     }
 
@@ -151,7 +151,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * Replace the initial state of the block properties, without replacing or removing any modifications done via {@link #properties(NonNullUnaryOperator)}.
      * 
      * @param block
-     *            The block to create the initial properties from (via {@link FabricBlockSettings#copy(BlockBehaviour)})
+     *            The block to create the initial properties from (via {@link FabricBlockSettings#copyOf(BlockBehaviour)})
      * @return this {@link BlockBuilder}
      */
     public BlockBuilder<T, P> initialProperties(NonNullSupplier<? extends Block> block) {
@@ -218,7 +218,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      *            A factory for the item, which accepts the block object and properties and returns a new item
      * @return the {@link ItemBuilder} for the {@link BlockItem}
      */
-    public <I extends BlockItem> ItemBuilder<I, BlockBuilder<T, P>> item(NonNullBiFunction<? super T, FabricItemSettings, ? extends I> factory) {
+    public <I extends BlockItem> ItemBuilder<I, BlockBuilder<T, P>> item(NonNullBiFunction<? super T, BlockBehaviour.Properties, ? extends I> factory) {
         return getOwner().<I, BlockBuilder<T, P>> item(this, getName(), p -> factory.apply(getEntry(), p))
                 /*.setData(ProviderType.LANG, NonNullBiConsumer.noop()) // FIXME Need a better API for "unsetting" providers
                 .model((ctx, prov) -> {
@@ -350,7 +350,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * Configure the loot table for this block. This is different than most data gen callbacks as the callback does not accept a {@link DataGenContext}, but instead a
      * {@link RegistrateBlockLootTables}, for creating specifically block loot tables.
      * <p>
-     * If the block does not have a loot table (i.e. {@link FabricBlockSettings#dropsNothing()} is called) this action will be <em>skipped</em>.
+     * If the block does not have a loot table (i.e. {@link BlockBehaviour.Properties#dropsNothing()} is called) this action will be <em>skipped</em>.
      * 
      * @param cons
      *            The callback which will be invoked during block loot table creation.
@@ -390,7 +390,7 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
 
     @Override
     protected T createEntry() {
-        @NotNull FabricBlockSettings properties = this.initialProperties.get();
+        @NotNull BlockBehaviour.Properties properties = this.initialProperties.get();
         properties = propertiesCallback.apply(properties);
         return factory.apply(properties);
     }
