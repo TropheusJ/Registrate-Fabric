@@ -38,7 +38,7 @@ import com.tterrag.registrate.util.nullness.NonNullSupplier;
 public class TileEntityBuilder<T extends BlockEntity, P> extends AbstractBuilder<BlockEntityType<?>, BlockEntityType<T>, P, TileEntityBuilder<T, P>> {
     
     public interface BlockEntityFactory<T extends BlockEntity> {
-        public T create(BlockEntityType<T> type, BlockPos pos, BlockState state);
+        T create(BlockPos pos, BlockState state, BlockEntityType<T> type);
     }
     
     /**
@@ -133,7 +133,7 @@ public class TileEntityBuilder<T extends BlockEntity, P> extends AbstractBuilder
     protected BlockEntityType<T> createEntry() {
         BlockEntityFactory<T> factory = this.factory;
         Supplier<BlockEntityType<T>> supplier = asSupplier();
-        return BlockEntityType.Builder.of((pos, state) -> factory.create(supplier.get(), pos, state), validBlocks.stream().map(NonNullSupplier::get).toArray(Block[]::new))
+        return BlockEntityType.Builder.of((pos, state) -> factory.create(pos, state, supplier.get()), validBlocks.stream().map(NonNullSupplier::get).toArray(Block[]::new))
                 .build(null);
     }
     
