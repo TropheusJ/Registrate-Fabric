@@ -11,9 +11,11 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandler;
 import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandlerRegistry;
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
+import net.fabricmc.fabric.api.client.render.fluid.v1.SimpleFluidRenderHandler;
+import net.fabricmc.fabric.api.event.client.ClientSpriteRegistryCallback;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.Tag.Named;
@@ -31,7 +33,6 @@ import com.tterrag.registrate.fabric.EnvExecutor;
 import com.tterrag.registrate.fabric.FluidBlockHelper;
 import com.tterrag.registrate.fabric.RegistryObject;
 import com.tterrag.registrate.fabric.SimpleFlowableFluid;
-import com.tterrag.registrate.fabric.SimpleFluidRenderHandler;
 import com.tterrag.registrate.util.NonNullLazyValue;
 import com.tterrag.registrate.util.entry.FluidEntry;
 import com.tterrag.registrate.util.entry.RegistryEntry;
@@ -545,18 +546,22 @@ public class FluidBuilder<T extends SimpleFlowableFluid, P> extends AbstractBuil
 		return this;
 	}
 
+	@SuppressWarnings("deprecation")
 	protected void registerRenderHandler(T entry) {
 		EnvExecutor.runWhenOn(EnvType.CLIENT, () -> () -> {
 			final FluidRenderHandler handler = renderHandler.get().create(stillTexture, flowingTexture);
 			FluidRenderHandlerRegistry.INSTANCE.register(entry, handler);
 			FluidRenderHandlerRegistry.INSTANCE.register(entry.getSource(), handler);
+            ClientSpriteRegistryCallback.event(TextureAtlas.LOCATION_BLOCKS).register((atlasTexture, registry) -> {
+                registry.register(stillTexture);
+                registry.register(flowingTexture);
+            });
 		});
 	}
 
 	protected void setDefaultRenderHandler() {
 		this.renderHandler = () -> (stillTexture, flowingTexture) -> {
-			final SimpleFluidRenderHandler handler = new SimpleFluidRenderHandler(color);
-			handler.registerListeners(stillTexture, flowingTexture);
+			final SimpleFluidRenderHandler handler = new SimpleFluidRenderHandler(stillTexture, flowingTexture, flowingTexture, color);
 			return handler;
 		};
 	}
