@@ -6,13 +6,16 @@
 //
 //import com.tterrag.registrate.AbstractRegistrate;
 //
-//import net.minecraft.data.server.EntityLootTableGenerator;
-//import net.minecraft.entity.EntityType;
-//import net.minecraft.entity.SpawnGroup;
-//import net.minecraft.loot.LootTable;
-//import net.minecraft.util.Identifier;
+//import lombok.RequiredArgsConstructor;
+//import net.minecraft.data.loot.EntityLoot;
+//import net.minecraft.resources.ResourceLocation;
+//import net.minecraft.world.entity.EntityType;
+//import net.minecraft.world.entity.MobCategory;
+//import net.minecraft.world.level.storage.loot.LootTable;
 //
-//public class RegistrateEntityLootTables extends EntityLootTableGenerator implements RegistrateLootTables {
+//@RequiredArgsConstructor
+//public class RegistrateEntityLootTables extends EntityLoot implements RegistrateLootTables {
+//
 //    private final AbstractRegistrate<?> parent;
 //    private final Consumer<RegistrateEntityLootTables> callback;
 //
@@ -28,25 +31,17 @@
 //
 //    @Override
 //    protected boolean isNonLiving(EntityType<?> entitytype) {
-//        return entitytype.getSpawnGroup() == SpawnGroup.MISC; // TODO open this to customization?
+//        return entitytype.getCategory() == MobCategory.MISC; // TODO open this to customization?
 //    }
 //
 //    // @formatter:off
 //    // GENERATED START
-//    @Override
-//    public void register(EntityType<?> type, LootTable.Builder table) {
-//        super.register(type, table);
-//    }
 //
 //    @Override
-//    public void register(Identifier id, LootTable.Builder table) {
-//        super.register(id, table);
-//    }
+//    public void add(EntityType<?> type, LootTable.Builder table) { super.add(type, table); }
 //
-//    @javax.annotation.Generated("lombok")
-//    public RegistrateEntityLootTables(final AbstractRegistrate<?> parent, final Consumer<RegistrateEntityLootTables> callback) {
-//        this.parent = parent;
-//        this.callback = callback;
-//    }
+//    @Override
+//    public void add(ResourceLocation id, LootTable.Builder table) { super.add(id, table); }
+//
 //    // GENERATED END
 //}

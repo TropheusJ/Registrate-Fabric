@@ -1,23 +1,21 @@
 package com.tterrag.registrate;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Table;
+import com.google.common.collect.*;
+import com.tterrag.registrate.providers.ProviderType;
+import com.tterrag.registrate.providers.RegistrateDataProvider;
+import com.tterrag.registrate.providers.RegistrateProvider;
+import com.tterrag.registrate.util.nullness.*;
+import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
@@ -26,6 +24,7 @@ import net.minecraft.Util;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.core.Registry;
+import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -44,6 +43,8 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.Material;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.message.Message;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.tterrag.registrate.builders.BlockBuilder;
@@ -66,11 +67,6 @@ import com.tterrag.registrate.fabric.SimpleFlowableFluid;
 import com.tterrag.registrate.util.DebugMarkers;
 import com.tterrag.registrate.util.NonNullLazyValue;
 import com.tterrag.registrate.util.entry.RegistryEntry;
-import com.tterrag.registrate.util.nullness.NonNullBiFunction;
-import com.tterrag.registrate.util.nullness.NonNullConsumer;
-import com.tterrag.registrate.util.nullness.NonNullFunction;
-import com.tterrag.registrate.util.nullness.NonNullSupplier;
-import com.tterrag.registrate.util.nullness.NonNullUnaryOperator;
 
 /**
  * Manages all registrations and data generators for a mod.
@@ -210,9 +206,9 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
      */
     private final Multimap<Class<?>, Runnable> afterRegisterCallbacks = HashMultimap.create();
     private final Set<Class<?>> completedRegistrations = new HashSet<>();
-//    private final Table<Pair<String, Class<?>>, ProviderType<?>, Consumer<? extends RegistrateProvider>> datagensByEntry = HashBasedTable.create();
-//    private final ListMultimap<ProviderType<?>, @NonnullType NonNullConsumer<? extends RegistrateProvider>> datagens = ArrayListMultimap.create();
-//    private final NonNullLazyValue<Boolean> doDatagen = new NonNullLazyValue<>(DatagenModLoader::isRunningDataGen);
+    private final Table<Pair<String, Class<?>>, ProviderType<?>, Consumer<? extends RegistrateProvider>> datagensByEntry = HashBasedTable.create();
+    private final ListMultimap<ProviderType<?>, @NonnullType NonNullConsumer<? extends RegistrateProvider>> datagens = ArrayListMultimap.create();
+    //private final NonNullLazyValue<Boolean> doDatagen = new NonNullLazyValue<>(FabricDataGenerator DatagenModLoader::isRunningDataGen);
     /**
      */
     private final String modid;
@@ -324,13 +320,6 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
         callbacks.clear();
         completedRegistrations.add(type);
     }
-
-//    @Nullable
-//    private RegistrateDataProvider provider;
-
-//    protected void onData(GatherDataEvent event) {
-//        event.getGenerator().install(provider = new RegistrateDataProvider(this, modid, event));
-//    }
 
     /**
      * Get the current name (from the last call to {@link #object(String)}), throwing an exception if it is not set.
@@ -496,9 +485,9 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
      *            A callback to be invoked during data generation
      * @return this {@link AbstractRegistrate}
      */
-//    public <P extends RegistrateProvider, R> S setDataGenerator(Builder<R, ?, ?, ?> builder, ProviderType<P> type, NonNullConsumer<? extends P> cons) {
-//        return this.<P, R>setDataGenerator(builder.getName(), builder.getRegistryType(), type, cons);
-//    }
+    public <P extends RegistrateProvider, R> S setDataGenerator(Builder<R, ?, ?, ?> builder, ProviderType<P> type, NonNullConsumer<? extends P> cons) {
+        return this.<P, R>setDataGenerator(builder.getName(), builder.getRegistryType(), type, cons);
+    }
 
     /**
      * Mostly internal, sets the data generator for a certain entry/type combination. This will replace an existing data gen callback if it exists.
@@ -517,14 +506,14 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
      *            A callback to be invoked during data generation
      * @return this {@link AbstractRegistrate}
      */
-//    public <P extends RegistrateProvider, R> S setDataGenerator(String entry, Class<? super R> registryType, ProviderType<P> type, NonNullConsumer<? extends P> cons) {
-//        if (!doDatagen.get()) return self();
-//        Consumer<? extends RegistrateProvider> existing = datagensByEntry.put(Pair.of(entry, registryType), type, cons);
-//        if (existing != null) {
-//            datagens.remove(type, existing);
-//        }
-//        return addDataGenerator(type, cons);
-//    }
+    public <P extends RegistrateProvider, R> S setDataGenerator(String entry, Class<? super R> registryType, ProviderType<P> type, NonNullConsumer<? extends P> cons) {
+        //if (!doDatagen.get()) return self();
+        Consumer<? extends RegistrateProvider> existing = datagensByEntry.put(Pair.of(entry, registryType), type, cons);
+        if (existing != null) {
+            datagens.remove(type, existing);
+        }
+        return addDataGenerator(type, cons);
+    }
 
     /**
      * Add a data generator callback that is not associated with any entry, which can never replace an existing data generator.
@@ -539,16 +528,16 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
      *            A callback to be invoked during data generation
      * @return this {@link AbstractRegistrate}
      */
-//    public <T extends RegistrateProvider> S addDataGenerator(ProviderType<? extends T> type, NonNullConsumer<? extends T> cons) {
-//        if (doDatagen.get()) {
-//            datagens.put(type, cons);
-//        }
-//        return self();
-//    }
+    public <T extends RegistrateProvider> S addDataGenerator(ProviderType<? extends T> type, NonNullConsumer<? extends T> cons) {
+        //if (doDatagen.get()) {
+            datagens.put(type, cons);
+        //}
+        return self();
+    }
 
     private final NonNullLazyValue<List<Pair<String, String>>> extraLang = new NonNullLazyValue<>(() -> {
         final List<Pair<String, String>> ret = new ArrayList<>();
-//        addDataGenerator(ProviderType.LANG, prov -> ret.forEach(p -> prov.add(p.getKey(), p.getValue())));
+        //addDataGenerator(ProviderType.LANG, prov -> ret.forEach(p -> prov.add(p.getKey(), p.getValue())));
         return ret;
     });
 
@@ -564,7 +553,7 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
     @Deprecated
     public TranslatableComponent addLang(String key, String value) {
         final String prefixedKey = getModid() + "." + key;
-//        addDataGenerator(ProviderType.LANG, p -> p.add(prefixedKey, value));
+        //addDataGenerator(ProviderType.LANG, p -> p.add(prefixedKey, value));
         return new TranslatableComponent(prefixedKey);
     }
 
@@ -610,21 +599,21 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
      * @return A {@link TranslatableComponent} representing the translated text
      */
     public TranslatableComponent addRawLang(String key, String value) {
-//        if (doDatagen.get()) {
-//            extraLang.get().add(Pair.of(key, value));
-//        }
+        //if (doDatagen.get()) {
+            extraLang.get().add(Pair.of(key, value));
+        //}
         return new TranslatableComponent(key);
     }
 
-//    @SuppressWarnings("null")
-//    private Optional<Pair<String, Class<?>>> getEntryForGenerator(ProviderType<?> type, NonNullConsumer<? extends RegistrateProvider> generator) {
-//        for (Map.Entry<Pair<String, Class<?>>, Consumer<? extends RegistrateProvider>> e : datagensByEntry.column(type).entrySet()) {
-//            if (e.getValue() == generator) {
-//                return Optional.of(e.getKey());
-//            }
-//        }
-//        return Optional.empty();
-//    }
+    @SuppressWarnings("null")
+    private Optional<Pair<String, Class<?>>> getEntryForGenerator(ProviderType<?> type, NonNullConsumer<? extends RegistrateProvider> generator) {
+        for (Map.Entry<Pair<String, Class<?>>, Consumer<? extends RegistrateProvider>> e : datagensByEntry.column(type).entrySet()) {
+            if (e.getValue() == generator) {
+                return Optional.of(e.getKey());
+            }
+        }
+        return Optional.empty();
+    }
 
     /**
      * For internal use, calls upon registered data generators to actually create their data.
@@ -636,39 +625,39 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
      * @param gen
      *            The provider
      */
-//    @SuppressWarnings("unchecked")
-//    public <T extends RegistrateProvider> void genData(ProviderType<? extends T> type, T gen) {
-//        if (!doDatagen.get()) return;
-//        datagens.get(type).forEach(cons -> {
-//            Optional<Pair<String, Class<?>>> entry = null;
-//            if (log.isEnabled(Level.DEBUG, DebugMarkers.DATA)) {
-//                entry = getEntryForGenerator(type, cons);
-//                if (entry.isPresent()) {
-//                    log.debug(DebugMarkers.DATA, "Generating data of type {} for entry {} [{}]", RegistrateDataProvider.getTypeName(type), entry.get().getLeft(), entry.get().getRight().getSimpleName());
-//                } else {
-//                    log.debug(DebugMarkers.DATA, "Generating unassociated data of type {} ({})", RegistrateDataProvider.getTypeName(type), type);
-//                }
-//            }
-//            try {
-//                ((Consumer<T>) cons).accept(gen);
-//            } catch (Exception e) {
-//                if (entry == null) {
-//                    entry = getEntryForGenerator(type, cons);
-//                }
-//                Message err;
-//                if (entry.isPresent()) {
-//                    err = log.getMessageFactory().newMessage("Unexpected error while running data generator of type {} for entry {} [{}]", RegistrateDataProvider.getTypeName(type), entry.get().getLeft(), entry.get().getRight().getSimpleName());
-//                } else {
-//                    err = log.getMessageFactory().newMessage("Unexpected error while running unassociated data generator of type {} ({})", RegistrateDataProvider.getTypeName(type), type);
-//                }
-//                if (skipErrors) {
-//                    log.error(err);
-//                } else {
-//                    throw new RuntimeException(err.getFormattedMessage(), e);
-//                }
-//            }
-//        });
-//    }
+    @SuppressWarnings("unchecked")
+    public <T extends RegistrateProvider> void genData(ProviderType<? extends T> type, T gen) {
+        //if (!doDatagen.get()) return;
+        datagens.get(type).forEach(cons -> {
+            Optional<Pair<String, Class<?>>> entry = null;
+            if (log.isEnabled(Level.DEBUG, DebugMarkers.DATA)) {
+                entry = getEntryForGenerator(type, cons);
+                if (entry.isPresent()) {
+                    log.debug(DebugMarkers.DATA, "Generating data of type {} for entry {} [{}]", RegistrateDataProvider.getTypeName(type), entry.get().getLeft(), entry.get().getRight().getSimpleName());
+                } else {
+                    log.debug(DebugMarkers.DATA, "Generating unassociated data of type {} ({})", RegistrateDataProvider.getTypeName(type), type);
+                }
+            }
+            try {
+                ((Consumer<T>) cons).accept(gen);
+            } catch (Exception e) {
+                if (entry == null) {
+                    entry = getEntryForGenerator(type, cons);
+                }
+                Message err;
+                if (entry.isPresent()) {
+                    err = log.getMessageFactory().newMessage("Unexpected error while running data generator of type {} for entry {} [{}]", RegistrateDataProvider.getTypeName(type), entry.get().getLeft(), entry.get().getRight().getSimpleName());
+                } else {
+                    err = log.getMessageFactory().newMessage("Unexpected error while running unassociated data generator of type {} ({})", RegistrateDataProvider.getTypeName(type), type);
+                }
+                if (skipErrors) {
+                    log.error(err);
+                } else {
+                    throw new RuntimeException(err.getFormattedMessage(), e);
+                }
+            }
+        });
+    }
 
     /**
      * Enable skipping of registry entries and data generators that error during registration/generation.

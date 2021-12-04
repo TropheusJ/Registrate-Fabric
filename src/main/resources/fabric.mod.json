@@ -19,6 +19,9 @@
   "entrypoints": {
     "client": [
       "com.tterrag.registrate.fabric.ClientInit"
+    ],
+    "fabric-datagen": [
+      "com.tterrag.registrate.Registrate"
     ]
   },
   "mixins": [
