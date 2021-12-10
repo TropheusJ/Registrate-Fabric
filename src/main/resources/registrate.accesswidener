@@ -4,3 +4,5 @@ transitive-accessible class net/minecraft/world/level/block/entity/BlockEntityTy
 transitive-accessible method net/minecraft/world/item/crafting/Ingredient <init> (Ljava/util/stream/Stream;)V
 transitive-extendable method net/minecraft/data/loot/BlockLoot add (Lnet/minecraft/world/level/block/Block;Lnet/minecraft/world/level/storage/loot/LootTable$Builder;)V
 transitive-extendable class net/minecraft/world/item/crafting/Ingredient
+transitive-accessible method net/minecraft/data/tags/TagsProvider tag (Lnet/minecraft/tags/Tag$Named;)Lnet/minecraft/data/tags/TagsProvider$TagAppender;
+transitive-accessible class net/minecraft/data/tags/TagsProvider$TagAppender

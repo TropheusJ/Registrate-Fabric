@@ -1,12 +1,22 @@
 package com.tterrag.registrate.builders;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.fabric.RegistryObject;
+import com.tterrag.registrate.providers.ProviderType;
+import com.tterrag.registrate.providers.RegistrateLangProvider;
+import com.tterrag.registrate.providers.RegistrateTagsProvider;
 import com.tterrag.registrate.util.entry.LazyRegistryEntry;
 import com.tterrag.registrate.util.entry.RegistryEntry;
+import com.tterrag.registrate.util.nullness.NonNullBiFunction;
 import com.tterrag.registrate.util.nullness.NonNullFunction;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
 import com.tterrag.registrate.util.nullness.NonnullType;
+
+import java.util.Arrays;
+
+import net.minecraft.tags.Tag;
 
 /**
  * Base class which most builders should extend, instead of implementing [@link {@link Builder} directly.
@@ -29,7 +39,9 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     private final String name;
     private final BuilderCallback callback;
     private final Class<? super R> registryType;
-//    private final Multimap<ProviderType<? extends RegistrateTagsProvider<?>>, Identified<?>> tagsByType = HashMultimap.create();
+
+    private final Multimap<ProviderType<? extends RegistrateTagsProvider<?>>, Tag.Named<?>> tagsByType = HashMultimap.create();
+
     /**
      * A supplier for the entry that will discard the reference to this builder after it is resolved
      */
@@ -67,15 +79,18 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
      *            The tags to add
      * @return this {@link Builder}
      */
-//    @SuppressWarnings("unchecked")
-//    @SafeVarargs
-//    public final S tag(ProviderType<? extends RegistrateTagsProvider<R>> type, Identified<R>... tags) {
-//        if (!tagsByType.containsKey(type)) {
-//            setData(type, (ctx, prov) -> tagsByType.get(type).stream().map(t -> (Identified<R>) t).map(prov::getOrCreateTagBuilder).forEach(b -> b.add(asSupplier().get())));
-//        }
-//        tagsByType.putAll(type, Arrays.asList(tags));
-//        return (S) this;
-//    }
+    @SuppressWarnings("unchecked")
+    @SafeVarargs
+    public final S tag(ProviderType<? extends RegistrateTagsProvider<R>> type, Tag.Named<R>... tags) {
+        if (!tagsByType.containsKey(type)) {
+            setData(type, (ctx, prov) -> tagsByType.get(type).stream()
+                    .map(t -> (Tag.Named<R>) t)
+                    .map(prov::tag)
+                    .forEach(b -> b.add(asSupplier().get())));
+        }
+        tagsByType.putAll(type, Arrays.asList(tags));
+        return (S) this;
+    }
 
     /**
      * Remove a tag (or tags) from this entry of a given type. Useful to remove default tags on fluids, for example. Multiple calls will remove additional tags.
@@ -86,16 +101,16 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
      *            The tags to remove
      * @return this {@link Builder}
      */
-//    @SuppressWarnings("unchecked")
-//    @SafeVarargs
-//    public final S removeTag(ProviderType<RegistrateTagsProvider<R>> type, Identified<R>... tags) {
-//        if (tagsByType.containsKey(type)) {
-//            for (Identified<R> tag : tags) {
-//                tagsByType.remove(type, tag);
-//            }
-//        }
-//        return (S) this;
-//    }
+    @SuppressWarnings("unchecked")
+    @SafeVarargs
+    public final S removeTag(ProviderType<RegistrateTagsProvider<R>> type, Tag.Named<R>... tags) {
+        if (tagsByType.containsKey(type)) {
+            for (Tag.Named<R> tag : tags) {
+                tagsByType.remove(type, tag);
+            }
+        }
+        return (S) this;
+    }
 
     /**
      * Set the lang key for this entry to the default value (specified by {@link RegistrateLangProvider#getAutomaticName(NonNullSupplier)}). Generally, specific helpers from concrete builders should be used
@@ -124,9 +139,9 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     	return (S) this;
     }
 
-//    private S lang(NonNullFunction<T, String> langKeyProvider, NonNullBiFunction<RegistrateLangProvider, NonNullSupplier<? extends T>, String> localizedNameProvider) {
-//        return setData(ProviderType.LANG, (ctx, prov) -> prov.add(langKeyProvider.apply(ctx.getEntry()), localizedNameProvider.apply(prov, ctx::getEntry)));
-//    }
+    private S lang(NonNullFunction<T, String> langKeyProvider, NonNullBiFunction<RegistrateLangProvider, NonNullSupplier<? extends T>, String> localizedNameProvider) {
+        return setData(ProviderType.LANG, (ctx, prov) -> prov.add(langKeyProvider.apply(ctx.getEntry()), localizedNameProvider.apply(prov, ctx::getEntry)));
+    }
 
     @javax.annotation.Generated("lombok")
     public AbstractBuilder(final AbstractRegistrate<?> owner, final P parent, final String name, final BuilderCallback callback, final Class<? super R> registryType) {

@@ -32,18 +32,18 @@ import net.minecraft.world.level.material.Fluid;
 public interface ProviderType<T extends RegistrateProvider> {
 
     // SERVER DATA
-    public static final ProviderType<RegistrateRecipeProvider> RECIPE = register("recipe", (p, g) -> new RegistrateRecipeProvider(p, g));
-    public static final ProviderType<RegistrateAdvancementProvider> ADVANCEMENT = register("advancement", (p, g) -> new RegistrateAdvancementProvider(p, g));
-    public static final ProviderType<RegistrateLootTableProvider> LOOT = register("loot", (p, g) -> new RegistrateLootTableProvider(p, g));
+    public static final ProviderType<RegistrateRecipeProvider> RECIPE = register("recipe", RegistrateRecipeProvider::new);
+    public static final ProviderType<RegistrateAdvancementProvider> ADVANCEMENT = register("advancement", RegistrateAdvancementProvider::new);
+    public static final ProviderType<RegistrateLootTableProvider> LOOT = register("loot", RegistrateLootTableProvider::new);
     public static final ProviderType<RegistrateTagsProvider<Block>> BLOCK_TAGS = register("tags/block", type -> (p, g) -> new RegistrateTagsProvider<Block>(p, type, "blocks", g, Registry.BLOCK));
     public static final ProviderType<RegistrateItemTagsProvider> ITEM_TAGS = registerDelegate("tags/item", type -> (p, g, existing) -> new RegistrateItemTagsProvider(p, type, "items", g, (RegistrateTagsProvider<Block>)existing.get(BLOCK_TAGS)));
     public static final ProviderType<RegistrateTagsProvider<Fluid>> FLUID_TAGS = register("tags/fluid", type -> (p, g) -> new RegistrateTagsProvider<Fluid>(p, type, "fluids", g, Registry.FLUID));
     public static final ProviderType<RegistrateTagsProvider<EntityType<?>>> ENTITY_TAGS = register("tags/entity", type -> (p, g) -> new RegistrateTagsProvider<EntityType<?>>(p, type, "entity_types", g, Registry.ENTITY_TYPE));
 
     // CLIENT DATA
-//    public static final ProviderType<RegistrateBlockstateProvider> BLOCKSTATE = register("blockstate", (p, e) -> new RegistrateBlockstateProvider(p, e.getGenerator(), e.getExistingFileHelper()));
-//    public static final ProviderType<RegistrateItemModelProvider> ITEM_MODEL = register("item_model", (p, e, existing) -> new RegistrateItemModelProvider(p, e.getGenerator(), ((RegistrateBlockstateProvider)existing.get(BLOCKSTATE)).getExistingFileHelper()));
-//    public static final ProviderType<RegistrateLangProvider> LANG = register("lang", (p, e) -> new RegistrateLangProvider(p, e.getGenerator()));
+    public static final ProviderType<RegistrateBlockstateProvider> BLOCKSTATE = register("blockstate", RegistrateBlockstateProvider::new);
+    public static final ProviderType<RegistrateItemModelProvider> ITEM_MODEL = register("item_model", RegistrateItemModelProvider::new);
+    public static final ProviderType<RegistrateLangProvider> LANG = register("lang", RegistrateLangProvider::new);
 
     T create(AbstractRegistrate<?> parent, FabricDataGenerator generator, Map<ProviderType<?>, RegistrateProvider> existing);
 

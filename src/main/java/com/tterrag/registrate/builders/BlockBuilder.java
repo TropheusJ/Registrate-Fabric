@@ -2,9 +2,15 @@ package com.tterrag.registrate.builders;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Preconditions;
+import com.google.gson.JsonElement;
+import com.tterrag.registrate.providers.*;
+import com.tterrag.registrate.providers.loot.RegistrateBlockLootTables;
+import com.tterrag.registrate.providers.loot.RegistrateLootTableProvider;
+import com.tterrag.registrate.util.nullness.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
@@ -24,15 +30,13 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
+
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.fabric.EnvExecutor;
 import com.tterrag.registrate.fabric.RegistryObject;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import com.tterrag.registrate.util.entry.RegistryEntry;
-import com.tterrag.registrate.util.nullness.NonNullBiFunction;
-import com.tterrag.registrate.util.nullness.NonNullFunction;
-import com.tterrag.registrate.util.nullness.NonNullSupplier;
-import com.tterrag.registrate.util.nullness.NonNullUnaryOperator;
 
 /**
  * A builder for blocks, allows for customization of the {@link BlockBehaviour.Properties}, creation of block items, and configuration of data associated with blocks (loot tables, recipes, etc.).
@@ -221,8 +225,8 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      */
     public <I extends BlockItem> ItemBuilder<I, BlockBuilder<T, P>> item(NonNullBiFunction<? super T, Item.Properties, ? extends I> factory) {
         return getOwner().<I, BlockBuilder<T, P>> item(this, getName(), p -> factory.apply(getEntry(), p))
-                /*.setData(ProviderType.LANG, NonNullBiConsumer.noop()) // FIXME Need a better API for "unsetting" providers
-                .model((ctx, prov) -> {
+                .setData(ProviderType.LANG, NonNullBiConsumer.noop()) // FIXME Need a beetter API for "unsetting" providers
+                /*.model((ctx, prov) -> {
                     Optional<String> model = getOwner().getDataProvider(ProviderType.BLOCKSTATE)
                             .flatMap(p -> p.getExistingVariantBuilder(getEntry()))
                             .map(b -> b.getModels().get(b.partialState()))
@@ -312,9 +316,9 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * @return this {@link BlockBuilder}
      * @see #setData(ProviderType, NonNullBiConsumer)
      */
-//    public BlockBuilder<T, P> blockstate(NonNullBiConsumer<DataGenContext<Block, T>, RegistrateBlockstateProvider> cons) {
-//        return setData(ProviderType.BLOCKSTATE, cons);
-//    }
+    public BlockBuilder<T, P> blockstate(NonNullBiConsumer<DataGenContext<Block, T>, RegistrateBlockstateProvider> cons) {
+        return setData(ProviderType.BLOCKSTATE, cons);
+    }
 
     /**
      * Assign the default translation, as specified by {@link RegistrateLangProvider#getAutomaticName(NonNullSupplier)}. This is the default, so it is generally not necessary to call, unless for undoing
@@ -338,32 +342,32 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
     }
 
     /**
-     * Assign the default loot table, as specified by {@link RegistrateBlockLootTables#addDrop(Block)}. This is the default, so it is generally not necessary to call, unless for
+     * Assign the default loot table, as specified by {@link RegistrateBlockLootTables#dropSelf(Block)}. This is the default, so it is generally not necessary to call, unless for
      * undoing previous changes.
      * 
      * @return this {@link BlockBuilder}
      */
     public BlockBuilder<T, P> defaultLoot() {
-        return this/*loot(RegistrateBlockLootTables::addDrop)*/;
+        return loot(RegistrateBlockLootTables::dropSelf);
     }
 
     /**
      * Configure the loot table for this block. This is different than most data gen callbacks as the callback does not accept a {@link DataGenContext}, but instead a
      * {@link RegistrateBlockLootTables}, for creating specifically block loot tables.
      * <p>
-     * If the block does not have a loot table (i.e. {@link BlockBehaviour.Properties#dropsNothing()} is called) this action will be <em>skipped</em>.
+     * If the block does not have a loot table (i.e. {@link BlockBehaviour.Properties#noDrops()} is called) this action will be <em>skipped</em>.
      * 
      * @param cons
      *            The callback which will be invoked during block loot table creation.
      * @return this {@link BlockBuilder}
      */
-//    public BlockBuilder<T, P> loot(NonNullBiConsumer<RegistrateBlockLootTables, T> cons) {
-//        return setData(ProviderType.LOOT, (ctx, prov) -> prov.addLootAction(LootType.BLOCK, tb -> {
-//            if (!ctx.getEntry().getLootTableId().equals(LootTables.EMPTY)) {
-//                cons.accept(tb, ctx.getEntry());
-//            }
-//        }));
-//    }
+    public BlockBuilder<T, P> loot(NonNullBiConsumer<RegistrateBlockLootTables, T> cons) {
+        return setData(ProviderType.LOOT, (ctx, prov) -> prov.addLootAction(RegistrateLootTableProvider.LootType.BLOCK, tb -> {
+            if (!ctx.getEntry().getLootTable().equals(BuiltInLootTables.EMPTY)) {
+                cons.accept((RegistrateBlockLootTables) tb, ctx.getEntry());
+            }
+        }));
+    }
 
     /**
      * Configure the recipe(s) for this block.
@@ -373,9 +377,9 @@ public class BlockBuilder<T extends Block, P> extends AbstractBuilder<Block, T, 
      * @return this {@link BlockBuilder}
      * @see #setData(ProviderType, NonNullBiConsumer)
      */
-//    public BlockBuilder<T, P> recipe(NonNullBiConsumer<DataGenContext<Block, T>, RegistrateRecipeProvider> cons) {
-//        return setData(ProviderType.RECIPE, cons);
-//    }
+    public BlockBuilder<T, P> recipe(NonNullBiConsumer<DataGenContext<Block, T>, RegistrateRecipeProvider> cons) {
+        return setData(ProviderType.RECIPE, cons);
+    }
 
     /**
      * Assign {@link Named}{@code s} to this block. Multiple calls will add additional tags.

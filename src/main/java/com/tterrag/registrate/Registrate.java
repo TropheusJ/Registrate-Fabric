@@ -30,11 +30,8 @@ public class Registrate extends AbstractRegistrate<Registrate> implements DataGe
         super("modid");
     }
 
-    @Nullable
-    private RegistrateDataProvider provider;
-
     @Override
     public void onInitializeDataGenerator(FabricDataGenerator fabricDataGenerator) {
-        fabricDataGenerator.addProvider(provider = new RegistrateDataProvider(this, fabricDataGenerator.getModId(), fabricDataGenerator));
+        fabricDataGenerator.addProvider(this.provider = new RegistrateDataProvider(this, fabricDataGenerator.getModId(), fabricDataGenerator));
     }
 }

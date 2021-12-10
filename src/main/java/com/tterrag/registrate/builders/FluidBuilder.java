@@ -7,6 +7,9 @@ import java.util.function.Supplier;
 
 import com.google.common.annotations.Beta;
 import com.google.common.base.Preconditions;
+import com.tterrag.registrate.providers.ProviderType;
+import com.tterrag.registrate.providers.RegistrateTagsProvider;
+import com.tterrag.registrate.util.nullness.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandler;
@@ -18,6 +21,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.Tag;
 import net.minecraft.tags.Tag.Named;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
@@ -36,10 +40,6 @@ import com.tterrag.registrate.fabric.SimpleFlowableFluid;
 import com.tterrag.registrate.util.NonNullLazyValue;
 import com.tterrag.registrate.util.entry.FluidEntry;
 import com.tterrag.registrate.util.entry.RegistryEntry;
-import com.tterrag.registrate.util.nullness.NonNullBiFunction;
-import com.tterrag.registrate.util.nullness.NonNullConsumer;
-import com.tterrag.registrate.util.nullness.NonNullFunction;
-import com.tterrag.registrate.util.nullness.NonNullSupplier;
 
 /**
  * A builder for fluids, allows for customization of the {@link SimpleFlowableFluid.Properties} and {@link FluidAttributes}, and creation of the source variant, fluid block, and bucket item, as well as
@@ -396,7 +396,7 @@ public class FluidBuilder<T extends SimpleFlowableFluid, P> extends AbstractBuil
         this.defaultBucket = false;
         return getOwner().<I, FluidBuilder<T, P>>item(this, bucketName, p -> ((NonNullBiFunction<SimpleFlowableFluid, Item.Properties, ? extends I>) factory).apply(this.source.get(), p)) // Fabric TODO
                 .properties(p -> p.craftRemainder(Items.BUCKET).stacksTo(1))
-                /*.model((ctx, prov) -> prov.generated(ctx::getEntry, new Identifier(getOwner().getModid(), "item/" + bucketName)))*/;
+                .model((ctx, prov) -> prov.generated(ctx::getEntry, new ResourceLocation(getOwner().getModid(), "item/" + bucketName)));
     }
 
     @Beta
@@ -417,11 +417,11 @@ public class FluidBuilder<T extends SimpleFlowableFluid, P> extends AbstractBuil
      */
     @SafeVarargs
     public final FluidBuilder<T, P> tag(Named<Fluid>... tags) {
-        FluidBuilder<T, P> ret = this/*.tag(ProviderType.FLUID_TAGS, tags)*/;
-//        if (this.tags.isEmpty()) {
-//            ret.getOwner().<RegistrateTagsProvider<Fluid>, Fluid> setDataGenerator(ret.sourceName, getRegistryType(), ProviderType.FLUID_TAGS,
-//                    prov -> this.tags.stream().map(prov::getOrCreateTagBuilder).forEach(p -> p.add(getSource())));
-//        }
+        FluidBuilder<T, P> ret = this.tag(ProviderType.FLUID_TAGS, tags);
+        if (this.tags.isEmpty()) {
+            ret.getOwner().<RegistrateTagsProvider<Fluid>, Fluid> setDataGenerator(ret.sourceName, getRegistryType(), ProviderType.FLUID_TAGS,
+                    prov -> this.tags.stream().map(prov::tag).forEach(p -> p.add(getSource())));
+        }
         this.tags.addAll(Arrays.asList(tags));
         return ret;
     }
@@ -434,9 +434,9 @@ public class FluidBuilder<T extends SimpleFlowableFluid, P> extends AbstractBuil
      * @return this {@link FluidBuilder}
      */
     @SafeVarargs
-    public final FluidBuilder<T, P> removeTag(Named<Fluid>... tags) {
+    public final FluidBuilder<T, P> removeTag(Tag.Named<Fluid>... tags) {
         this.tags.removeAll(Arrays.asList(tags));
-        return this/*.removeTag(ProviderType.FLUID_TAGS, tags)*/;
+        return this.removeTag(ProviderType.FLUID_TAGS, tags);
     }
 
     private SimpleFlowableFluid getSource() {
@@ -456,7 +456,7 @@ public class FluidBuilder<T extends SimpleFlowableFluid, P> extends AbstractBuil
         // TODO improve this?
         if (block.isPresent()) {
 //            attributes.translationKey(block.get().getTranslationKey());
-//            setData(ProviderType.LANG, NonNullBiConsumer.noop());
+            setData(ProviderType.LANG, NonNullBiConsumer.noop());
         } else {
 //            attributes.translationKey(Util.createTranslationKey("fluid", new Identifier(getOwner().getModid(), sourceName)));
         }

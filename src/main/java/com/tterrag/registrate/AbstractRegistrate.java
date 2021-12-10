@@ -321,6 +321,9 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
         completedRegistrations.add(type);
     }
 
+    @Nullable
+    protected RegistrateDataProvider provider;
+
     /**
      * Get the current name (from the last call to {@link #object(String)}), throwing an exception if it is not set.
      * 
@@ -462,13 +465,13 @@ public abstract class AbstractRegistrate<S extends AbstractRegistrate<S>> {
      * @throws IllegalStateException
      *             if datagen has not started yet
      */
-//    public <P extends RegistrateProvider> Optional<P> getDataProvider(ProviderType<P> type) {
-//        RegistrateDataProvider provider = this.provider;
-//        if (provider != null) {
-//            return provider.getSubProvider(type);
-//        }
-//        throw new IllegalStateException("Cannot get data provider before datagen is started");
-//    }
+    public <P extends RegistrateProvider> Optional<P> getDataProvider(ProviderType<P> type) {
+        RegistrateDataProvider provider = this.provider;
+        if (provider != null) {
+            return provider.getSubProvider(type);
+        }
+        throw new IllegalStateException("Cannot get data provider before datagen is started");
+    }
 
     /**
      * Mostly internal, sets the data generator for a certain entry/type combination. This will replace an existing data gen callback if it exists.
